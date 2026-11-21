@@ -203,6 +203,16 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 .cred{color:#fff;margin-top:22px;font-size:13px;opacity:.85}.cred summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}.cred a{color:#fff;overflow-wrap:anywhere}.cred ul{padding-inline-start:18px;margin:4px 0}.hint{color:#fff;opacity:.9;font-size:15px;margin-top:12px;text-align:center}
 @media(max-width:600px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:420px){.mode{min-height:130px;font-size:21px}}
 @media(prefers-reduced-motion:reduce){.stage .word{clip-path:none}*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}.bubbles{display:none}}
+
+/* fit on any screen */
+.view{min-height:100dvh}
+#opts{width:100%;max-width:min(100%,calc(100dvh - 250px));margin:0 auto}
+.ladder{min-height:0;height:min(520px,calc(100dvh - 120px));align-self:flex-start;position:sticky;top:10px}
+.stage{max-width:min(520px,calc(100dvh - 340px))}
+.stage .word{font-size:clamp(40px,min(12vw,8dvh),84px)}
+.arena{max-width:760px}
+@media(min-width:900px){.ask{max-width:none}}
+@media(max-height:560px){.ask .spk{width:56px;height:56px}.ask{padding:8px 12px;margin-bottom:8px}}
 </style>
 </head>
 <body>

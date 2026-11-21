@@ -152,6 +152,29 @@ button:focus-visible{outline:4px solid #fff;outline-offset:3px}
 .peekwrap i:first-of-type{left:0}.peekwrap i:last-of-type{right:0;animation-name:curtainR}
 @keyframes curtainL{to{transform:translateX(-80%)}}@keyframes curtainR{to{transform:translateX(80%)}}
 .bigw{font-size:46px;font-weight:800;line-height:1.2;color:var(--ink)}.bigw .gap{color:var(--red);display:inline-block;min-width:.8em;border-bottom:4px dashed var(--red)}
+.st-lily,.st-egg,.st-kite,.st-tv{grid-template-columns:repeat(3,minmax(0,1fr));padding-top:14px}
+.st-frame,.st-hex,.st-shelf,.st-house{grid-template-columns:repeat(2,minmax(0,1fr))}
+.st-lily .opt{border-radius:50%;box-shadow:0 0 0 8px #43a047,0 10px 0 8px #2e7d32;animation:bob 3s ease-in-out infinite;animation-delay:var(--d)}
+.st-lily .opt img{border-radius:50%}
+.st-frame .opt{border-radius:6px;box-shadow:0 0 0 10px #c9a227,0 0 0 14px #8d6e1a,0 10px 18px 14px rgba(0,0,0,.25);margin:12px;transform:rotate(calc((var(--i) - 1.5) * 2deg))}
+.st-egg .opt{border-radius:50% 50% 50% 50%/60% 60% 40% 40%;aspect-ratio:.8;box-shadow:0 0 0 6px #fff8e1,0 8px 0 6px rgba(0,0,0,.15);animation:wobble 2.6s ease-in-out infinite;animation-delay:var(--d)}
+.st-egg .opt img{border-radius:50% 50% 50% 50%/60% 60% 40% 40%}
+.st-hex .opt{clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%);border-radius:0;aspect-ratio:1.1;box-shadow:none;background:#ffb300}
+.st-hex .opt img{clip-path:polygon(25% 7%,75% 7%,96% 50%,75% 93%,25% 93%,4% 50%)}
+.st-shelf{background:linear-gradient(transparent calc(50% - 10px),#8d6e63 calc(50% - 10px) 50%,transparent 50% calc(100% - 10px),#8d6e63 calc(100% - 10px));padding:10px 10px 14px;border-radius:12px}
+.st-shelf .opt{border-radius:6px 6px 0 0;aspect-ratio:.8;margin-bottom:10px;box-shadow:inset 0 0 0 6px var(--c)}
+.st-house{background:#ffccbc;padding:16px;border-radius:12px 12px 0 0;position:relative;margin-top:44px}
+.st-house::before{content:"";position:absolute;left:-10px;right:-10px;top:-44px;height:46px;background:#c62828;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.st-house .opt{border-radius:4px;box-shadow:0 0 0 6px #fff,0 0 0 9px #6d4c41}
+.st-kite .opt{transform:rotate(45deg) scale(.78);border-radius:8px;box-shadow:0 0 0 6px var(--c);animation:fly 3s ease-in-out infinite;animation-delay:var(--d);overflow:hidden}
+.st-kite .opt img{transform:rotate(-45deg) scale(1.42)}
+.st-tv .opt{border-radius:14px;box-shadow:0 0 0 8px #37474f,0 14px 0 8px #263238}
+.st-tv .opt::after{content:"";position:absolute;left:35%;right:35%;bottom:-24px;height:10px;background:#263238;border-radius:4px}
+@keyframes wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes fly{0%,100%{transform:rotate(45deg) scale(.78) translateY(0)}50%{transform:rotate(40deg) scale(.78) translate(-6px,-8px)}}
+#opts[class*="st-"]{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;row-gap:22px}
+#opts[class*="st-"]>.opt:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 9px)}
+.st-kite{padding:20px}
 .arena{width:100%;max-width:620px;display:flex;gap:12px;align-items:stretch}
 .pmain{flex:1;min-width:0}
 .ladder{width:76px;flex:none;position:relative;background:rgba(255,255,255,.18);border-radius:18px;min-height:420px}
@@ -303,33 +326,33 @@ function restart(){token++;player.pause();const t=token;(async()=>{while(wi<list
 const ANIMALS=['🐒','🐸','🐱','🐻','🐰','🐼','🦊','🐨','🐯','🦁','🐮','🐷','🐵','🐔','🐧','🐦','🐤','🦉','🐢','🐙','🦒','🦓','🐘','🦔','🐿️','🦘','🐞','🐝'];
 // one game per letter (same order as the letters)
 const GAMES=[
- {t:'Listen and tap the picture',p:'audio',o:'pics',n:4,st:'grid'},
- {t:'Pop the right balloon',p:'audio',o:'pics',n:3,st:'balloon'},
- {t:'Which word is this picture?',p:'image',o:'words',n:3,st:'list'},
- {t:'Which one starts with the letter?',p:'letter',o:'pics',n:4,st:'grid',mode:'starts'},
- {t:'Catch the right fish',p:'audio',o:'pics',n:3,st:'fish'},
- {t:'Tap the right bubble',p:'audio',o:'pics',n:3,st:'bubble'},
- {t:'Yes or no?',p:'tf',o:'yesno',st:'two'},
- {t:'Find the odd one out',p:'letter',o:'pics',n:4,st:'grid',mode:'odd'},
- {t:'Read and tap the picture',p:'word',o:'pics',n:3,st:'grid3'},
- {t:'Guess the blurry picture',p:'blur',o:'words',n:3,st:'list'},
- {t:'Zoom detective',p:'zoom',o:'pics',n:3,st:'grid3'},
- {t:'Find the missing letter',p:'missing',o:'letters',n:3,st:'letters'},
- {t:'Ride the right train car',p:'audio',o:'pics',n:3,st:'train'},
- {t:'Tap the right cloud',p:'audio',o:'pics',n:3,st:'cloud'},
- {t:'Hear the letter, tap it',p:'lsound',o:'letters',n:4,st:'letters'},
- {t:'Find the same letter',p:'lshape',o:'letters',n:4,st:'letters'},
- {t:'This or that?',p:'audio',o:'pics',n:2,st:'two'},
- {t:'Catch the falling picture',p:'audio',o:'pics',n:3,st:'fall'},
- {t:'Tap the twinkling star',p:'audio',o:'pics',n:4,st:'star'},
- {t:'Pop the word balloon',p:'image',o:'words',n:3,st:'wballoon'},
- {t:'Open the right gift',p:'audio',o:'pics',n:3,st:'gift'},
- {t:'Read: yes or no?',p:'tfword',o:'yesno',st:'two'},
- {t:'Zoom and read',p:'zoom',o:'words',n:3,st:'list'},
- {t:'Peekaboo picture',p:'peek',o:'words',n:3,st:'list'},
- {t:'Which letter does it start with?',p:'image',o:'letters',n:3,st:'letters',mode:'first'},
- {t:'Which word does NOT belong?',p:'letter',o:'words',n:4,st:'list',mode:'oddw'},
- {t:'Flip the cards',p:'audio',o:'pics',n:4,st:'cards'},
+ {t:'Picture cards',st:'grid',n:4},
+ {t:'Balloons',st:'balloon',n:3},
+ {t:'Bubbles',st:'bubble',n:3},
+ {t:'Fish in the sea',st:'fish',n:3},
+ {t:'Clouds in the sky',st:'cloud',n:3},
+ {t:'Twinkling stars',st:'star',n:4},
+ {t:'The little train',st:'train',n:3},
+ {t:'Gift boxes',st:'gift',n:3},
+ {t:'Falling pictures',st:'fall',n:3},
+ {t:'This or that?',st:'two',n:2},
+ {t:'Lily pads in the pond',st:'lily',n:3},
+ {t:'Picture frames',st:'frame',n:4},
+ {t:'Eggs in the nest',st:'egg',n:3},
+ {t:'Beehive',st:'hex',n:4},
+ {t:'Book shelf',st:'shelf',n:4},
+ {t:'House windows',st:'house',n:4},
+ {t:'Flying kites',st:'kite',n:3},
+ {t:'TV screens',st:'tv',n:3},
+ {t:'Big balloons',st:'balloon',n:2},
+ {t:'More bubbles',st:'bubble',n:4},
+ {t:'Three cards',st:'grid3',n:3},
+ {t:'Fish party',st:'fish',n:2},
+ {t:'Star night',st:'star',n:2},
+ {t:'Long train',st:'train',n:4},
+ {t:'Party gifts',st:'gift',n:2},
+ {t:'Pond hop',st:'lily',n:4},
+ {t:'Kite festival',st:'kite',n:4},
  {t:'Surprise mix!',mix:true}];
 let step=0,answered=false,Q=null,lastPr='',G=null,lastG=-1;
 const STEPS=10;
@@ -356,7 +379,7 @@ function ask(){
   answered=false;
   const gi=letterIndex()%GAMES.length;let g=GAMES[gi];
   if(g.mix){let k;do{k=Math.floor(Math.random()*(GAMES.length-1))}while(k===lastG);lastG=k;g=GAMES[k]}
-  G=g;$('pTitle').textContent=g.t;
+  g=Object.assign({p:'audio',o:'pics'},g);G=g;$('pTitle').textContent=g.t;
   const it=pickWord();let say0=()=>say(it.au),key=it.pr,P='',opts=[],O=$('opts'),afterSay=it.au;
   const lettersPool=SECS.map(s=>s.l);
   if(g.o==='pics'){

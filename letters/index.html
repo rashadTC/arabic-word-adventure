@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arabic Letters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful, warm, made for a four-year-old's thumb and a parent beside him.
+   IDEA: a little cartoon theatre: a stage with a curtain colour per letter, where words "perform" one after another.
+   PICTURE: the stage itself: a huge photo card that pops in, the Arabic word drawing itself, stars flying on a right answer.
+   COLOUR and TYPE: each letter owns its stage colour (blue, orange, purple, green, red, teal, violet, indigo, sunset); white cards; red first letter; sunny yellow stars; Baloo 2 + Baloo Bhaijaan 2.
+   LAYOUT: home = big letter tiles + two giant mode buttons; watch = full-height stage with controls under it; play = sound button over a 2x2 picture grid. */
+:root{color-scheme:light;--c:#1e88e5;--ink:#1d1d24;--soft:#5f6368;--sun:#ffc107;--red:#d32f2f;--blue:#1565c0}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--c);color:var(--ink);font:17px/1.45 "Baloo 2",system-ui,sans-serif;overflow-x:clip;transition:background .5s}
+.ar{font-family:"Baloo Bhaijaan 2","Baloo 2",sans-serif;direction:rtl}
+.view{display:none;min-height:100%;flex-direction:column;align-items:center;padding:max(14px,env(safe-area-inset-top)) 14px 18px}
+.view.on{display:flex}
+.wrap{width:100%;max-width:760px}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+button:focus-visible{outline:4px solid #fff;outline-offset:3px}
+.bubbles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bubbles i{position:absolute;border-radius:50%;background:rgba(255,255,255,.14);animation:float 14s linear infinite}
+@keyframes float{from{transform:translateY(110vh)}to{transform:translateY(-30vh)}}
+.view>*{position:relative;z-index:1}
+/* home */
+.hero{color:#fff;text-align:center;margin:10px 0 4px}
+.hero h1{font-size:clamp(34px,8vw,52px);line-height:1.05;margin:0;text-wrap:balance}
+.hero .ar{display:block;font-size:.75em;opacity:.9}
+.hero p{margin:8px auto 0;max-width:36ch;opacity:.92}
+.tiles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin:18px 0;direction:rtl}
+.tile{background:#fff;border-radius:22px;aspect-ratio:1;display:grid;place-items:center;font:800 clamp(34px,9vw,54px)/1 "Baloo Bhaijaan 2",sans-serif;color:var(--tc);box-shadow:0 5px 0 rgba(0,0,0,.18);transition:transform .15s}
+.tile div{display:flex;flex-direction:column;align-items:center;line-height:1.25}.tile small{display:block;font:700 12px/1 "Baloo 2",sans-serif;color:var(--soft);margin-top:2px}.tile .w{font-size:.42em}
+.tile[aria-pressed=true]{transform:translateY(-4px) scale(1.06);outline:5px solid var(--sun)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mode{background:#fff;border-radius:26px;padding:18px 10px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 6px 0 rgba(0,0,0,.18);font-weight:800;font-size:24px;color:var(--ink)}
+.mode svg{width:62px;height:62px}
+.mode span{font-size:15px;font-weight:600;color:var(--soft);line-height:1.2;text-align:center}
+.picked{color:#fff;text-align:center;margin-top:12px;font-weight:700}
+/* shared top bar */
+.bar{width:100%;max-width:760px;display:flex;align-items:center;gap:10px;color:#fff;margin-bottom:10px}
+.round{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.95);color:var(--ink);display:grid;place-items:center;flex:none;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.round svg{width:24px;height:24px}
+.bar .t{flex:1;font-weight:800;font-size:20px;line-height:1.1}
+.dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;max-width:50%}
+.dots b{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.4)}
+.dots b.on{background:#fff}
+/* watch stage */
+.stage{width:100%;max-width:520px;background:#fff;border-radius:30px;box-shadow:0 8px 0 rgba(0,0,0,.18);overflow:hidden;text-align:center;position:relative}
+.stage .ph{aspect-ratio:1/1;background:#fff;overflow:hidden;position:relative}
+.stage .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.stage .ph.ill img{object-fit:contain;padding:18px}
+.stage .word{font-size:clamp(52px,15vw,84px);font-weight:800;line-height:1.2;margin-top:4px;min-height:1.25em}
+.stage .word .r{color:var(--red)}
+.stage .word{clip-path:inset(0 0 0 100%)}.stage .word.write{animation:write 1.1s ease-out forwards}@keyframes write{to{clip-path:inset(0 0 0 0)}}.stage .word b{color:var(--red);font-weight:800}
+.stage .pr{color:var(--blue);font-weight:800;font-size:24px;line-height:1.1;opacity:0}
+.stage .en{color:var(--soft);font-size:17px;padding-bottom:16px;opacity:0}
+.badge{position:absolute;top:12px;right:12px;width:62px;height:62px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font:800 36px/1 "Baloo Bhaijaan 2",sans-serif;z-index:2;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.intro{padding:34px 16px 30px}
+.intro .big{width:min(62vw,280px);aspect-ratio:1;margin:0 auto;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font:800 clamp(110px,34vw,170px)/1 "Baloo Bhaijaan 2",sans-serif}
+.intro h2{font-size:38px;margin:14px 0 0;line-height:1.1}
+.intro p{margin:4px 0 0;color:var(--soft);font-size:18px}
+.ctrl{display:flex;gap:14px;justify-content:center;margin-top:16px}
+.ctrl .round{width:62px;height:62px}
+.ctrl .round.main{width:74px;height:74px;background:var(--sun)}
+.ctrl svg{width:30px;height:30px}
+.go-pop{animation:pop .55s cubic-bezier(.3,1.6,.5,1) both}
+.go-zoom img{animation:zoom 4.5s ease-out both}
+.go-up{animation:up .4s ease-out both}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes zoom{from{transform:scale(1.18)}to{transform:scale(1)}}
+@keyframes up{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+/* play */
+.ask{width:100%;max-width:520px;display:flex;align-items:center;gap:12px;background:#fff;border-radius:26px;padding:12px 14px;box-shadow:0 6px 0 rgba(0,0,0,.18);margin-bottom:14px}
+.ask .spk{width:76px;height:76px;border-radius:50%;background:var(--sun);display:grid;place-items:center;flex:none;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.ask .spk svg{width:40px;height:40px}
+.ask .spk.ring{animation:ring 1s ease-in-out}
+@keyframes ring{25%{transform:scale(1.12)}50%{transform:scale(.96)}75%{transform:scale(1.06)}}
+.ask .q{flex:1;font-weight:800;font-size:20px;line-height:1.2}
+.ask .q small{display:block;font-weight:600;color:var(--soft);font-size:15px}
+.stars{color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;gap:4px}
+.stars svg{width:26px;height:26px}
+
+.opt{background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 6px 0 rgba(0,0,0,.18);position:relative;padding:0;aspect-ratio:1;transition:transform .15s}
+.opt img{width:100%;height:100%;object-fit:cover;display:block}
+.opt.ill img{object-fit:contain;padding:12px}
+.opt.right{outline:7px solid #43a047;transform:scale(1.04)}
+.opt.wrong{animation:shake .45s;opacity:.45}
+.opt .lab{position:absolute;inset:auto 0 0;background:rgba(255,255,255,.94);font:800 30px/1.3 "Baloo Bhaijaan 2",sans-serif;direction:rtl;text-align:center;transform:translateY(100%);transition:transform .3s}
+.opt.right .lab{transform:none}
+@keyframes shake{20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+.done{width:100%;max-width:520px;background:#fff;border-radius:30px;padding:30px 18px;text-align:center;box-shadow:0 8px 0 rgba(0,0,0,.18)}
+.done h2{font-size:40px;margin:0;line-height:1.1}
+.done .big{font-size:64px;font-weight:800;color:var(--c);line-height:1}
+.done p{color:var(--soft);margin:6px 0 18px}
+.pill{background:var(--c);color:#fff;border-radius:999px;min-height:54px;padding:6px 26px;font-weight:800;font-size:20px;margin:6px}
+.pill.alt{background:#eef0f4;color:var(--ink)}
+#opts{display:grid;gap:12px;position:relative}
+.opt .lab{display:none}.opt.right .lab{display:block}
+.st-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.st-grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.st-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.st-list,.st-wballoon{grid-template-columns:1fr}
+.st-letters{grid-template-columns:repeat(2,minmax(0,1fr))}
+.lopt{background:#fff;border-radius:24px;aspect-ratio:1.3;font-size:64px;font-weight:800;color:var(--c);box-shadow:0 6px 0 rgba(0,0,0,.18)}
+.lopt.right,.yn.right{outline:7px solid #43a047}.lopt.wrong,.yn.wrong{animation:shake .45s;opacity:.45}
+.yn{border-radius:28px;aspect-ratio:1;font-size:80px;font-weight:800;color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.18)}.yn.yes{background:#43a047}.yn.no{background:#e53935}
+.st-balloon,.st-bubble,.st-cloud,.st-star,.st-fish,.st-fall{grid-template-columns:repeat(3,minmax(0,1fr));padding-top:18px}
+.st-star{grid-template-columns:repeat(2,minmax(0,1fr))}
+.st-balloon .opt{border-radius:50% 50% 46% 46%;aspect-ratio:.85;animation:bob 2.4s ease-in-out infinite;animation-delay:var(--d);overflow:visible}
+.st-balloon .opt img{border-radius:50% 50% 46% 46%}
+.st-balloon .opt::after{content:"";position:absolute;left:50%;bottom:-24px;width:2px;height:24px;background:rgba(255,255,255,.85)}
+.st-bubble .opt{border-radius:50%;animation:rise 3s ease-in-out infinite;animation-delay:var(--d);box-shadow:inset 0 0 0 6px rgba(255,255,255,.7),0 6px 14px rgba(0,0,0,.2)}
+.st-bubble .opt img{border-radius:50%}
+.st-cloud .opt{border-radius:40% 45% 35% 40%/50%;animation:drift 4s ease-in-out infinite;animation-delay:var(--d);box-shadow:0 0 0 8px #fff,0 8px 0 8px rgba(0,0,0,.12)}
+.st-star .opt{animation:twinkle 1.8s ease-in-out infinite;animation-delay:var(--d);clip-path:polygon(50% 0,63% 34%,100% 36%,71% 58%,81% 100%,50% 76%,19% 100%,29% 58%,0 36%,37% 34%);border-radius:0;aspect-ratio:1}
+.st-fish .opt{border-radius:50% 40% 40% 50%/50%;animation:swim 3.2s ease-in-out infinite;animation-delay:var(--d);overflow:visible}
+.st-fish .opt img{border-radius:50% 40% 40% 50%/50%}
+.st-fish .opt::after{content:"";position:absolute;right:-22px;top:30%;border:20px solid transparent;border-left:26px solid #ff9800;border-right:0}
+.st-fall{min-height:300px;align-items:start}
+.st-fall .opt{animation:fall 3.4s linear infinite;animation-delay:calc(var(--d)*-2)}
+.st-train{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:16px 4px 26px;background:linear-gradient(transparent calc(100% - 10px),#6d4c41 0);animation:chug 1s ease-in-out infinite}
+.st-train .opt{border-radius:10px;box-shadow:0 0 0 5px #e53935,0 8px 0 5px #b71c1c;overflow:visible}
+.st-train .opt::after{content:"● ●";position:absolute;left:0;right:0;bottom:-26px;text-align:center;color:#263238;font-size:20px;letter-spacing:12px}
+.st-gift{grid-template-columns:repeat(3,minmax(0,1fr));padding-top:30px}
+.st-gift .opt{border-radius:12px;box-shadow:0 0 0 6px #ec407a;animation:wiggle 2.2s ease-in-out infinite;animation-delay:var(--d);overflow:visible}
+.st-gift .opt::before{content:"";position:absolute;left:44%;top:-10px;bottom:-10px;width:12%;background:#ffc107;opacity:.85;z-index:1}
+.st-gift .opt::after{content:"🎀";position:absolute;top:-30px;left:50%;transform:translateX(-50%);font-size:34px;z-index:2}
+.st-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.st-cards .opt img{opacity:0;transition:opacity .3s}
+.st-cards .opt{background:repeating-linear-gradient(45deg,var(--c) 0 14px,#fff 14px 20px)}
+.st-cards .opt.open,.st-cards .opt.right{background:#fff}.st-cards .opt.open img,.st-cards .opt.right img{opacity:1}
+.st-wballoon .wopt{border-radius:50px;animation:bob 2.4s ease-in-out infinite;animation-delay:var(--d)}
+@keyframes rise{50%{transform:translateY(-16px) scale(1.04)}}
+@keyframes drift{50%{transform:translateX(10px)}}
+@keyframes twinkle{50%{transform:scale(.88);filter:brightness(1.25)}}
+@keyframes swim{0%,100%{transform:translateX(-8px) rotate(-3deg)}50%{transform:translateX(8px) rotate(3deg)}}
+@keyframes fall{0%{transform:translateY(-40px)}50%{transform:translateY(90px)}100%{transform:translateY(-40px)}}
+@keyframes chug{50%{transform:translateX(6px)}}
+@keyframes wiggle{0%,80%,100%{transform:none}85%{transform:rotate(-5deg)}90%{transform:rotate(5deg)}95%{transform:rotate(-3deg)}}
+.ask .q{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.qt{display:block;font-weight:800;font-size:19px;line-height:1.2;flex:1;min-width:120px}.qt small{display:block;font-weight:600;color:var(--soft);font-size:14px}
+.qimg{width:116px;height:116px;object-fit:cover;border-radius:18px;flex:none;background:#fff}.qimg.ill{object-fit:contain}
+.qimg.blur{animation:unblur 7s ease-out forwards}@keyframes unblur{from{filter:blur(14px)}to{filter:blur(2px)}}
+.zoomwrap,.peekwrap{position:relative;width:116px;height:116px;border-radius:18px;overflow:hidden;flex:none;display:block}
+.zoomwrap .qimg{animation:zoomout 9s ease-out forwards;transform-origin:35% 40%}@keyframes zoomout{from{transform:scale(4)}to{transform:scale(1.2)}}
+.peekwrap i{position:absolute;top:0;bottom:0;width:50%;background:repeating-linear-gradient(90deg,#c62828 0 10px,#e53935 10px 20px);animation:curtainL 7s ease-in forwards}
+.peekwrap i:first-of-type{left:0}.peekwrap i:last-of-type{right:0;animation-name:curtainR}
+@keyframes curtainL{to{transform:translateX(-80%)}}@keyframes curtainR{to{transform:translateX(80%)}}
+.bigw{font-size:46px;font-weight:800;line-height:1.2;color:var(--ink)}.bigw .gap{color:var(--red);display:inline-block;min-width:.8em;border-bottom:4px dashed var(--red)}
+.arena{width:100%;max-width:620px;display:flex;gap:12px;align-items:stretch}
+.pmain{flex:1;min-width:0}
+.ladder{width:76px;flex:none;position:relative;background:rgba(255,255,255,.18);border-radius:18px;min-height:420px}
+.rails{position:absolute;inset:14px 12px 10px;border-left:6px solid #8d6e63;border-right:6px solid #8d6e63;background:repeating-linear-gradient(to top,transparent 0 calc(10% - 5px),#a1887f calc(10% - 5px) 10%)}
+.flag{position:absolute;top:-6px;left:50%;transform:translateX(-50%);font-size:26px}
+.climber{position:absolute;left:50%;transform:translateX(-50%);font-size:40px;line-height:1;transition:bottom .6s cubic-bezier(.3,1.5,.5,1);filter:drop-shadow(0 3px 2px rgba(0,0,0,.3))}
+.climber.up{animation:hop .6s}.climber.down{animation:slip .6s}
+@keyframes hop{40%{transform:translateX(-50%) translateY(-14px) scale(1.15)}}
+@keyframes slip{30%{transform:translateX(-50%) rotate(-18deg)}60%{transform:translateX(-50%) rotate(14deg)}}
+#opts{display:grid;gap:12px}
+.opts.balloon{grid-template-columns:repeat(3,minmax(0,1fr));padding-top:20px}
+.opts.balloon .opt{border-radius:50% 50% 46% 46%;aspect-ratio:.85;animation:bob 2.4s ease-in-out infinite;animation-delay:var(--d);overflow:visible;box-shadow:0 6px 0 rgba(0,0,0,.18)}
+.opts.balloon .opt img{border-radius:50% 50% 46% 46%}
+.opts.balloon .opt::after{content:"";position:absolute;left:50%;bottom:-26px;width:2px;height:26px;background:rgba(255,255,255,.8)}
+.opts.balloon .opt.right{animation:popb .5s forwards}
+@keyframes bob{50%{transform:translateY(-12px)}}
+@keyframes popb{60%{transform:scale(1.25)}100%{transform:scale(0);opacity:0}}
+.wopt{background:#fff;border-radius:22px;min-height:76px;font-size:40px;font-weight:800;color:var(--ink);box-shadow:0 6px 0 rgba(0,0,0,.18)}
+.wopt.right{outline:7px solid #43a047}.wopt.wrong{animation:shake .45s;opacity:.45}
+.qimg{width:120px;height:120px;object-fit:cover;border-radius:18px;flex:none}.qimg.ill{object-fit:contain;background:#fff}
+.ask .q{display:flex;align-items:center;gap:12px}
+.bigl{font-size:64px;line-height:1;color:var(--c);font-weight:800;flex:none;min-width:60px;text-align:center}
+.winner{font-size:110px;line-height:1.1;animation:pop .6s cubic-bezier(.3,1.6,.5,1) both}
+@media(max-width:420px){.ladder{width:60px}.climber{font-size:32px}.qimg{width:92px;height:92px}.bigl{font-size:52px}.wopt{font-size:34px;min-height:66px}.ask .spk{width:60px;height:60px}}
+canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9}
+.cred{color:#fff;margin-top:22px;font-size:13px;opacity:.85}.cred summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}.cred a{color:#fff;overflow-wrap:anywhere}.cred ul{padding-inline-start:18px;margin:4px 0}.hint{color:#fff;opacity:.9;font-size:15px;margin-top:12px;text-align:center}
+@media(max-width:600px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:420px){.mode{min-height:130px;font-size:21px}}
+@media(prefers-reduced-motion:reduce){.stage .word{clip-path:none}*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}.bubbles{display:none}}
+</style>
+</head>
+<body>
+<div class="bubbles" id="bub" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<section class="view on" id="home">
+  <div class="wrap">
+    <div class="hero"><h1>Arabic letters <span class="ar">حُروفي العَرَبِيَّة</span></h1>
+      <p>Tap a letter, then press Watch or Play.</p></div>
+    <div class="tiles" id="tiles" role="group" aria-label="Choose a letter"></div>
+    <div class="modes">
+      <button class="mode" id="goWatch" type="button"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#1e88e5"/><path d="M25 19l22 13-22 13z" fill="#fff"/></svg>Watch<span>Words appear with picture and voice</span></button>
+      <button class="mode" id="goPlay" type="button"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#ffc107"/><path d="M32 13l5.6 11.4 12.6 1.8-9.1 8.9 2.1 12.5L32 41.7l-11.2 5.9 2.1-12.5-9.1-8.9 12.6-1.8z" fill="#fff"/></svg>Play<span>Hear a word, tap the right picture</span></button>
+    </div>
+    <p class="picked" id="picked"></p><details class="cred"><summary>Photo credits</summary><ul id="cred"></ul></details>
+  </div>
+</section>
+
+<section class="view" id="watch">
+  <div class="bar"><button class="round" type="button" data-home aria-label="Back to letters"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z" fill="#222"/></svg></button><div class="t" id="wTitle"></div><div class="dots" id="wDots"></div></div>
+  <div class="stage" id="stage"></div>
+  <div class="ctrl">
+    <button class="round" type="button" id="wPrev" aria-label="Previous word"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z" fill="#222"/></svg></button>
+    <button class="round main" type="button" id="wPlay" aria-label="Pause"><svg viewBox="0 0 24 24" id="wIcon"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="#222"/></svg></button>
+    <button class="round" type="button" id="wAgain" aria-label="Hear it again"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#222"/><path d="M16 8.5a5 5 0 0 1 0 7" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+    <button class="round" type="button" id="wNext" aria-label="Next word"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z" fill="#222"/></svg></button>
+  </div>
+  <p class="hint">Say each word out loud after the voice!</p>
+</section>
+
+<section class="view" id="play">
+  <div class="bar"><button class="round" type="button" data-home aria-label="Back to letters"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z" fill="#222"/></svg></button><div class="t" id="pTitle"></div><div class="stars" id="stepTxt">0 / 10</div></div>
+  <div class="arena">
+    <div class="pmain">
+      <div class="ask"><button class="spk" type="button" id="pSay" aria-label="Hear it again"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#222"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button><div class="q" id="pQ"></div></div>
+      <div id="opts"></div>
+    </div>
+    <div class="ladder" id="ladder" aria-label="Ladder progress"><div class="rails"></div><div class="flag">🏁</div><div class="climber" id="climber"></div></div>
+  </div>
+</section>
+
+<section class="view" id="end">
+  <div class="done" id="doneBox"></div>
+</section>
+
+<script>
+{
+const D={"S": [{"id": "l1", "l": "أ", "ar": "حرف الألف", "en": "Letter alif", "c": "E53935", "n": "a/L01.mp3", "items": [{"ar": "أَسَد", "pr": "asad", "en": "lion", "img": "p/asad.jpg", "kind": "photo", "au": "a/asad.mp3"}, {"ar": "أَرْنَب", "pr": "arnab", "en": "rabbit", "img": "p/arnab.jpg", "kind": "photo", "au": "a/arnab.mp3"}, {"ar": "أَناناس", "pr": "ananaas", "en": "pineapple", "img": "p/ananaas.jpg", "kind": "photo", "au": "a/ananaas.mp3"}, {"ar": "إِبْريق", "pr": "ibreeq", "en": "teapot", "img": "p/ibreeq.jpg", "kind": "photo", "au": "a/ibreeq.mp3"}, {"ar": "أُذُن", "pr": "udhun", "en": "ear", "img": "p/udhun.jpg", "kind": "ill", "au": "a/udhun.mp3"}, {"ar": "أَنْف", "pr": "anf", "en": "nose", "img": "p/anf.jpg", "kind": "ill", "au": "a/anf.mp3"}, {"ar": "إِصْبَع", "pr": "isba'", "en": "finger", "img": "p/isba.jpg", "kind": "ill", "au": "a/isba.mp3"}, {"ar": "أَرُزّ", "pr": "aruzz", "en": "rice", "img": "p/aruzz.jpg", "kind": "photo", "au": "a/aruzz.mp3"}, {"ar": "أُخْطُبوط", "pr": "akhtaboot", "en": "octopus", "img": "p/akhtaboot.jpg", "kind": "photo", "au": "a/akhtaboot.mp3"}, {"ar": "إِبْرَة", "pr": "ibra", "en": "needle", "img": "p/ibra.jpg", "kind": "photo", "au": "a/ibra.mp3"}]}, {"id": "l2", "l": "ب", "ar": "حرف الباء", "en": "Letter baa", "c": "1E88E5", "n": "a/L02.mp3", "items": [{"ar": "بَطَّة", "pr": "batta", "en": "duck", "img": "p/batta.jpg", "kind": "photo", "au": "a/batta.mp3"}, {"ar": "باب", "pr": "baab", "en": "door", "img": "p/baab.jpg", "kind": "photo", "au": "a/baab.mp3"}, {"ar": "بَيْت", "pr": "bayt", "en": "house", "img": "p/bayt.jpg", "kind": "photo", "au": "a/bayt.mp3"}, {"ar": "بَقَرَة", "pr": "baqara", "en": "cow", "img": "p/baqara.jpg", "kind": "photo", "au": "a/baqara.mp3"}, {"ar": "بُرْتُقال", "pr": "burtuqaal", "en": "orange", "img": "p/burtuqaal.jpg", "kind": "photo", "au": "a/burtuqaal.mp3"}, {"ar": "بالون", "pr": "baaloon", "en": "balloon", "img": "p/baaloon.jpg", "kind": "photo", "au": "a/baaloon.mp3"}, {"ar": "بَيْض", "pr": "bayd", "en": "eggs", "img": "p/bayd.jpg", "kind": "photo", "au": "a/bayd.mp3"}, {"ar": "بَحْر", "pr": "bahr", "en": "sea", "img": "p/bahr.jpg", "kind": "photo", "au": "a/bahr.mp3"}, {"ar": "بِطّيخ", "pr": "bitteekh", "en": "watermelon", "img": "p/bitteekh.jpg", "kind": "photo", "au": "a/bitteekh.mp3"}, {"ar": "بومَة", "pr": "booma", "en": "owl", "img": "p/booma.jpg", "kind": "photo", "au": "a/booma.mp3"}]}, {"id": "l3", "l": "ت", "ar": "حرف التاء", "en": "Letter taa", "c": "43A047", "n": "a/L03.mp3", "items": [{"ar": "تُفّاحَة", "pr": "tuffaaha", "en": "apple", "img": "p/tuffaaha.jpg", "kind": "photo", "au": "a/tuffaaha.mp3"}, {"ar": "تَمْر", "pr": "tamr", "en": "dates", "img": "p/tamr.jpg", "kind": "photo", "au": "a/tamr.mp3"}, {"ar": "تِمْساح", "pr": "timsaah", "en": "crocodile", "img": "p/timsaah.jpg", "kind": "photo", "au": "a/timsaah.mp3"}, {"ar": "تاج", "pr": "taaj", "en": "crown", "img": "p/taaj.jpg", "kind": "photo", "au": "a/taaj.mp3"}, {"ar": "تين", "pr": "teen", "en": "figs", "img": "p/teen.jpg", "kind": "photo", "au": "a/teen.mp3"}, {"ar": "تِلْفاز", "pr": "tilfaaz", "en": "TV", "img": "p/tilfaaz.jpg", "kind": "photo", "au": "a/tilfaaz.mp3"}, {"ar": "تَنّورَة", "pr": "tannoora", "en": "skirt", "img": "p/tannoora.jpg", "kind": "photo", "au": "a/tannoora.mp3"}, {"ar": "تاكْسي", "pr": "taaksi", "en": "taxi", "img": "p/taaksi.jpg", "kind": "photo", "au": "a/taaksi.mp3"}, {"ar": "تُراب", "pr": "turaab", "en": "soil", "img": "p/turaab.jpg", "kind": "photo", "au": "a/turaab.mp3"}, {"ar": "تَيْس", "pr": "tays", "en": "goat", "img": "p/tays.jpg", "kind": "photo", "au": "a/tays.mp3"}]}, {"id": "l4", "l": "ث", "ar": "حرف الثاء", "en": "Letter thaa", "c": "8E24AA", "n": "a/L04.mp3", "items": [{"ar": "ثَعْلَب", "pr": "tha'lab", "en": "fox", "img": "p/thalab.jpg", "kind": "photo", "au": "a/thalab.mp3"}, {"ar": "ثوم", "pr": "thoom", "en": "garlic", "img": "p/thoom.jpg", "kind": "photo", "au": "a/thoom.mp3"}, {"ar": "ثَلْج", "pr": "thalj", "en": "snow", "img": "p/thalj.jpg", "kind": "photo", "au": "a/thalj.mp3"}, {"ar": "ثَلّاجَة", "pr": "thallaaja", "en": "fridge", "img": "p/thallaaja.jpg", "kind": "photo", "au": "a/thallaaja.mp3"}, {"ar": "ثَوْر", "pr": "thawr", "en": "bull", "img": "p/thawr.jpg", "kind": "photo", "au": "a/thawr.mp3"}, {"ar": "ثُعْبان", "pr": "thu'baan", "en": "snake", "img": "p/thubaan.jpg", "kind": "photo", "au": "a/thubaan.mp3"}, {"ar": "ثَلاثَة", "pr": "thalaatha", "en": "three", "img": "p/thalaatha.jpg", "kind": "ill", "au": "a/thalaatha.mp3"}, {"ar": "ثَمانِيَة", "pr": "thamaaniya", "en": "eight", "img": "p/thamaaniya.jpg", "kind": "ill", "au": "a/thamaaniya.mp3"}, {"ar": "ثِمار", "pr": "thimaar", "en": "fruits", "img": "p/thimaar.jpg", "kind": "photo", "au": "a/thimaar.mp3"}, {"ar": "ثُرَيّا", "pr": "thurayya", "en": "chandelier", "img": "p/thurayya.jpg", "kind": "photo", "au": "a/thurayya.mp3"}]}, {"id": "l5", "l": "ج", "ar": "حرف الجيم", "en": "Letter jeem", "c": "F57C00", "n": "a/L05.mp3", "items": [{"ar": "جَمَل", "pr": "jamal", "en": "camel", "img": "p/jamal.jpg", "kind": "photo", "au": "a/jamal.mp3"}, {"ar": "جَزَر", "pr": "jazar", "en": "carrots", "img": "p/jazar.jpg", "kind": "photo", "au": "a/jazar.mp3"}, {"ar": "جَبَل", "pr": "jabal", "en": "mountain", "img": "p/jabal.jpg", "kind": "photo", "au": "a/jabal.mp3"}, {"ar": "جَرَس", "pr": "jaras", "en": "bell", "img": "p/jaras.jpg", "kind": "photo", "au": "a/jaras.mp3"}, {"ar": "جُبْن", "pr": "jubn", "en": "cheese", "img": "p/jubn.jpg", "kind": "photo", "au": "a/jubn.mp3"}, {"ar": "جَزيرَة", "pr": "jazeera", "en": "island", "img": "p/jazeera.jpg", "kind": "photo", "au": "a/jazeera.mp3"}, {"ar": "جَوْرَب", "pr": "jawrab", "en": "sock", "img": "p/jawrab.jpg", "kind": "photo", "au": "a/jawrab.mp3"}, {"ar": "جاموس", "pr": "jaamoos", "en": "buffalo", "img": "p/jaamoos.jpg", "kind": "photo", "au": "a/jaamoos.mp3"}, {"ar": "جِسْر", "pr": "jisr", "en": "bridge", "img": "p/jisr.jpg", "kind": "photo", "au": "a/jisr.mp3"}, {"ar": "جُنْدُب", "pr": "jundub", "en": "grasshopper", "img": "p/jundub.jpg", "kind": "photo", "au": "a/jundub.mp3"}]}, {"id": "l6", "l": "ح", "ar": "حرف الحاء", "en": "Letter haa", "c": "00897B", "n": "a/L06.mp3", "items": [{"ar": "حِصان", "pr": "hisaan", "en": "horse", "img": "p/hisaan.jpg", "kind": "photo", "au": "a/hisaan.mp3"}, {"ar": "حوت", "pr": "hoot", "en": "whale", "img": "p/hoot.jpg", "kind": "photo", "au": "a/hoot.mp3"}, {"ar": "حَليب", "pr": "haleeb", "en": "milk", "img": "p/haleeb.jpg", "kind": "photo", "au": "a/haleeb.mp3"}, {"ar": "حِذاء", "pr": "hidhaa'", "en": "shoe", "img": "p/hidhaa.jpg", "kind": "photo", "au": "a/hidhaa.mp3"}, {"ar": "حَبْل", "pr": "habl", "en": "rope", "img": "p/habl.jpg", "kind": "photo", "au": "a/habl.mp3"}, {"ar": "حَلَزون", "pr": "halazoon", "en": "snail", "img": "p/halazoon.jpg", "kind": "photo", "au": "a/halazoon.mp3"}, {"ar": "حِمار", "pr": "himaar", "en": "donkey", "img": "p/himaar.jpg", "kind": "photo", "au": "a/himaar.mp3"}, {"ar": "حافِلَة", "pr": "haafila", "en": "bus", "img": "p/haafila.jpg", "kind": "photo", "au": "a/haafila.mp3"}, {"ar": "حَقيبَة", "pr": "haqeeba", "en": "bag", "img": "p/haqeeba.jpg", "kind": "photo", "au": "a/haqeeba.mp3"}, {"ar": "حَلْوى", "pr": "halwa", "en": "sweets", "img": "p/halwa.jpg", "kind": "photo", "au": "a/halwa.mp3"}]}, {"id": "l7", "l": "خ", "ar": "حرف الخاء", "en": "Letter khaa", "c": "6D4C41", "n": "a/L07.mp3", "items": [{"ar": "خَروف", "pr": "kharoof", "en": "sheep", "img": "p/kharoof.jpg", "kind": "photo", "au": "a/kharoof.mp3"}, {"ar": "خُبْز", "pr": "khubz", "en": "bread", "img": "p/khubz.jpg", "kind": "photo", "au": "a/khubz.mp3"}, {"ar": "خَيْمَة", "pr": "khayma", "en": "tent", "img": "p/khayma.jpg", "kind": "photo", "au": "a/khayma.mp3"}, {"ar": "خِيار", "pr": "khiyaar", "en": "cucumber", "img": "p/khiyaar.jpg", "kind": "photo", "au": "a/khiyaar.mp3"}, {"ar": "خَوْخ", "pr": "khookh", "en": "peach", "img": "p/khookh.jpg", "kind": "photo", "au": "a/khookh.mp3"}, {"ar": "خَسّ", "pr": "khass", "en": "lettuce", "img": "p/khass.jpg", "kind": "photo", "au": "a/khass.mp3"}, {"ar": "خُفّاش", "pr": "khuffaash", "en": "bat", "img": "p/khuffaash.jpg", "kind": "photo", "au": "a/khuffaash.mp3"}, {"ar": "خَريطَة", "pr": "khareeta", "en": "map", "img": "p/khareeta.jpg", "kind": "photo", "au": "a/khareeta.mp3"}, {"ar": "خِزانَة", "pr": "khizaana", "en": "cupboard", "img": "p/khizaana.jpg", "kind": "photo", "au": "a/khizaana.mp3"}, {"ar": "خَشَب", "pr": "khashab", "en": "wood", "img": "p/khashab.jpg", "kind": "photo", "au": "a/khashab.mp3"}]}, {"id": "l8", "l": "د", "ar": "حرف الدال", "en": "Letter daal", "c": "EF6C00", "n": "a/L08.mp3", "items": [{"ar": "دُبّ", "pr": "dubb", "en": "bear", "img": "p/dubb.jpg", "kind": "photo", "au": "a/dubb.mp3"}, {"ar": "ديك", "pr": "deek", "en": "rooster", "img": "p/deek.jpg", "kind": "photo", "au": "a/deek.mp3"}, {"ar": "دَجاجَة", "pr": "dajaaja", "en": "hen", "img": "p/dajaaja.jpg", "kind": "photo", "au": "a/dajaaja.mp3"}, {"ar": "دَرّاجَة", "pr": "darraaja", "en": "bicycle", "img": "p/darraaja.jpg", "kind": "photo", "au": "a/darraaja.mp3"}, {"ar": "دُودَة", "pr": "dooda", "en": "worm", "img": "p/dooda.jpg", "kind": "photo", "au": "a/dooda.mp3"}, {"ar": "دُلْفين", "pr": "dulfeen", "en": "dolphin", "img": "p/dulfeen.jpg", "kind": "photo", "au": "a/dulfeen.mp3"}, {"ar": "دَلَّة", "pr": "dalla", "en": "coffee pot", "img": "p/dalla.jpg", "kind": "photo", "au": "a/dalla.mp3"}, {"ar": "دِرْهَم", "pr": "dirham", "en": "dirham coin", "img": "p/dirham.jpg", "kind": "photo", "au": "a/dirham.mp3"}, {"ar": "دَرَج", "pr": "daraj", "en": "stairs", "img": "p/daraj.jpg", "kind": "photo", "au": "a/daraj.mp3"}, {"ar": "دَيْناصور", "pr": "daynaasoor", "en": "dinosaur", "img": "p/daynaasoor.jpg", "kind": "photo", "au": "a/daynaasoor.mp3"}]}, {"id": "l9", "l": "ذ", "ar": "حرف الذال", "en": "Letter dhaal", "c": "5E35B1", "n": "a/L09.mp3", "items": [{"ar": "ذِئْب", "pr": "dhi'b", "en": "wolf", "img": "p/dhib.jpg", "kind": "photo", "au": "a/dhib.mp3"}, {"ar": "ذُرَة", "pr": "dhura", "en": "corn", "img": "p/dhura.jpg", "kind": "photo", "au": "a/dhura.mp3"}, {"ar": "ذَهَب", "pr": "dhahab", "en": "gold", "img": "p/dhahab.jpg", "kind": "photo", "au": "a/dhahab.mp3"}, {"ar": "ذُبابَة", "pr": "dhubaaba", "en": "fly", "img": "p/dhubaaba.jpg", "kind": "photo", "au": "a/dhubaaba.mp3"}, {"ar": "ذِراع", "pr": "dhiraa'", "en": "arm", "img": "p/dhiraa.jpg", "kind": "photo", "au": "a/dhiraa.mp3"}]}, {"id": "l10", "l": "ر", "ar": "حرف الراء", "en": "Letter raa", "c": "D32F2F", "n": "a/L10.mp3", "items": [{"ar": "رُمّان", "pr": "rummaan", "en": "pomegranate", "img": "p/rummaan.jpg", "kind": "photo", "au": "a/rummaan.mp3"}, {"ar": "رَمْل", "pr": "raml", "en": "sand", "img": "p/raml.jpg", "kind": "photo", "au": "a/raml.mp3"}, {"ar": "راديو", "pr": "raadyo", "en": "radio", "img": "p/raadyo.jpg", "kind": "photo", "au": "a/raadyo.mp3"}, {"ar": "روبوت", "pr": "roboot", "en": "robot", "img": "p/roboot.jpg", "kind": "photo", "au": "a/roboot.mp3"}, {"ar": "رُطَب", "pr": "rutab", "en": "fresh dates", "img": "p/rutab.jpg", "kind": "photo", "au": "a/rutab.mp3"}, {"ar": "ريشَة", "pr": "reesha", "en": "feather", "img": "p/reesha.jpg", "kind": "ill", "au": "a/reesha.mp3"}, {"ar": "رَأْس", "pr": "ra's", "en": "head", "img": "p/ra_s.jpg", "kind": "ill", "au": "a/ra_s.mp3"}, {"ar": "رِجْل", "pr": "rijl", "en": "leg", "img": "p/rijl.jpg", "kind": "ill", "au": "a/rijl.mp3"}, {"ar": "روبْيان", "pr": "roobyaan", "en": "shrimp", "img": "p/roobyaan.jpg", "kind": "photo", "au": "a/roobyaan.mp3"}, {"ar": "رَفّ", "pr": "raff", "en": "shelf", "img": "p/raff.jpg", "kind": "photo", "au": "a/raff.mp3"}]}, {"id": "l11", "l": "ز", "ar": "حرف الزاي", "en": "Letter zaay", "c": "C0CA33", "n": "a/L11.mp3", "items": [{"ar": "زَرافَة", "pr": "zaraafa", "en": "giraffe", "img": "p/zaraafa.jpg", "kind": "photo", "au": "a/zaraafa.mp3"}, {"ar": "زَهْرَة", "pr": "zahra", "en": "flower", "img": "p/zahra.jpg", "kind": "photo", "au": "a/zahra.mp3"}, {"ar": "زَيْتون", "pr": "zaytoon", "en": "olives", "img": "p/zaytoon.jpg", "kind": "photo", "au": "a/zaytoon.mp3"}, {"ar": "زِرّ", "pr": "zirr", "en": "button", "img": "p/zirr.jpg", "kind": "photo", "au": "a/zirr.mp3"}, {"ar": "زُجاجَة", "pr": "zujaaja", "en": "bottle", "img": "p/zujaaja.jpg", "kind": "photo", "au": "a/zujaaja.mp3"}, {"ar": "زُبْدَة", "pr": "zubda", "en": "butter", "img": "p/zubda.jpg", "kind": "photo", "au": "a/zubda.mp3"}, {"ar": "زَيْت", "pr": "zayt", "en": "oil", "img": "p/zayt.jpg", "kind": "photo", "au": "a/zayt.mp3"}, {"ar": "زَبيب", "pr": "zabeeb", "en": "raisins", "img": "p/zabeeb.jpg", "kind": "photo", "au": "a/zabeeb.mp3"}, {"ar": "زَنْجَبيل", "pr": "zanjabeel", "en": "ginger", "img": "p/zanjabeel.jpg", "kind": "photo", "au": "a/zanjabeel.mp3"}, {"ar": "زَوْرَق", "pr": "zawraq", "en": "small boat", "img": "p/zawraq.jpg", "kind": "photo", "au": "a/zawraq.mp3"}]}, {"id": "l12", "l": "س", "ar": "حرف السين", "en": "Letter seen", "c": "3949AB", "n": "a/L12.mp3", "items": [{"ar": "سَمَكَة", "pr": "samaka", "en": "fish", "img": "p/samaka.jpg", "kind": "photo", "au": "a/samaka.mp3"}, {"ar": "سَيّارَة", "pr": "sayyaara", "en": "car", "img": "p/sayyaara.jpg", "kind": "photo", "au": "a/sayyaara.mp3"}, {"ar": "ساعَة", "pr": "saa'a", "en": "clock", "img": "p/saa_a.jpg", "kind": "photo", "au": "a/saa_a.mp3"}, {"ar": "سُلَحْفاة", "pr": "sulahfaa", "en": "turtle", "img": "p/sulahfaa.jpg", "kind": "photo", "au": "a/sulahfaa.mp3"}, {"ar": "سَرير", "pr": "sareer", "en": "bed", "img": "p/sareer.jpg", "kind": "photo", "au": "a/sareer.mp3"}, {"ar": "سُلَّم", "pr": "sullam", "en": "ladder", "img": "p/sullam.jpg", "kind": "photo", "au": "a/sullam.mp3"}, {"ar": "سَفينَة", "pr": "safeena", "en": "ship", "img": "p/safeena.jpg", "kind": "photo", "au": "a/safeena.mp3"}, {"ar": "سِنْجاب", "pr": "sinjaab", "en": "squirrel", "img": "p/sinjaab.jpg", "kind": "photo", "au": "a/sinjaab.mp3"}, {"ar": "سَجّادَة", "pr": "sajjaada", "en": "rug", "img": "p/sajjaada.jpg", "kind": "photo", "au": "a/sajjaada.mp3"}, {"ar": "سُكَّر", "pr": "sukkar", "en": "sugar", "img": "p/sukkar.jpg", "kind": "photo", "au": "a/sukkar.mp3"}]}, {"id": "l13", "l": "ش", "ar": "حرف الشين", "en": "Letter sheen", "c": "FB8C00", "n": "a/L13.mp3", "items": [{"ar": "شَمْس", "pr": "shams", "en": "sun", "img": "p/shams.jpg", "kind": "photo", "au": "a/shams.mp3"}, {"ar": "شَجَرَة", "pr": "shajara", "en": "tree", "img": "p/shajara.jpg", "kind": "photo", "au": "a/shajara.mp3"}, {"ar": "شاي", "pr": "shaay", "en": "tea", "img": "p/shaay.jpg", "kind": "photo", "au": "a/shaay.mp3"}, {"ar": "شَمْعَة", "pr": "sham'a", "en": "candle", "img": "p/sham_a.jpg", "kind": "photo", "au": "a/sham_a.mp3"}, {"ar": "شاطِئ", "pr": "shaati'", "en": "beach", "img": "p/shaati.jpg", "kind": "photo", "au": "a/shaati.mp3"}, {"ar": "شَوْكَة", "pr": "shawka", "en": "fork", "img": "p/shawka.jpg", "kind": "photo", "au": "a/shawka.mp3"}, {"ar": "شَمّام", "pr": "shammaam", "en": "melon", "img": "p/shammaam.jpg", "kind": "photo", "au": "a/shammaam.mp3"}, {"ar": "شوكولاتَة", "pr": "shokolaata", "en": "chocolate", "img": "p/shokolaata.jpg", "kind": "photo", "au": "a/shokolaata.mp3"}, {"ar": "شاحِنَة", "pr": "shaahina", "en": "truck", "img": "p/shaahina.jpg", "kind": "photo", "au": "a/shaahina.mp3"}, {"ar": "شَطيرَة", "pr": "shateera", "en": "sandwich", "img": "p/shateera.jpg", "kind": "photo", "au": "a/shateera.mp3"}]}, {"id": "l14", "l": "ص", "ar": "حرف الصاد", "en": "Letter saad", "c": "00838F", "n": "a/L14.mp3", "items": [{"ar": "صَقْر", "pr": "saqr", "en": "falcon", "img": "p/saqr.jpg", "kind": "photo", "au": "a/saqr.mp3"}, {"ar": "صابون", "pr": "saaboon", "en": "soap", "img": "p/saaboon.jpg", "kind": "photo", "au": "a/saaboon.mp3"}, {"ar": "صَحْن", "pr": "sahn", "en": "plate", "img": "p/sahn.jpg", "kind": "photo", "au": "a/sahn.mp3"}, {"ar": "صُنْدوق", "pr": "sundooq", "en": "box", "img": "p/sundooq.jpg", "kind": "photo", "au": "a/sundooq.mp3"}, {"ar": "صوص", "pr": "soos", "en": "chick", "img": "p/soos.jpg", "kind": "photo", "au": "a/soos.mp3"}, {"ar": "صَبّار", "pr": "sabbaar", "en": "cactus", "img": "p/sabbaar.jpg", "kind": "photo", "au": "a/sabbaar.mp3"}, {"ar": "صاروخ", "pr": "saaroukh", "en": "rocket", "img": "p/saaroukh.jpg", "kind": "photo", "au": "a/saaroukh.mp3"}, {"ar": "صَخْرَة", "pr": "sakhra", "en": "rock", "img": "p/sakhra.jpg", "kind": "photo", "au": "a/sakhra.mp3"}, {"ar": "صَدَفَة", "pr": "sadafa", "en": "seashell", "img": "p/sadafa.jpg", "kind": "photo", "au": "a/sadafa.mp3"}, {"ar": "صَحْراء", "pr": "sahraa'", "en": "desert", "img": "p/sahraa.jpg", "kind": "photo", "au": "a/sahraa.mp3"}]}, {"id": "l15", "l": "ض", "ar": "حرف الضاد", "en": "Letter daad", "c": "7CB342", "n": "a/L15.mp3", "items": [{"ar": "ضِفْدَع", "pr": "difda'", "en": "frog", "img": "p/difda.jpg", "kind": "photo", "au": "a/difda.mp3"}, {"ar": "ضَبّ", "pr": "dabb", "en": "dabb lizard", "img": "p/dabb.jpg", "kind": "photo", "au": "a/dabb.mp3"}, {"ar": "ضِرْس", "pr": "dirs", "en": "tooth", "img": "p/dirs.jpg", "kind": "ill", "au": "a/dirs.mp3"}, {"ar": "ضَباب", "pr": "dabaab", "en": "fog", "img": "p/dabaab.jpg", "kind": "photo", "au": "a/dabaab.mp3"}, {"ar": "ضَوْء", "pr": "daw'", "en": "light", "img": "p/daw.jpg", "kind": "photo", "au": "a/daw.mp3"}, {"ar": "ضَفيرَة", "pr": "dafeera", "en": "braid", "img": "p/dafeera.jpg", "kind": "photo", "au": "a/dafeera.mp3"}, {"ar": "ضَبُع", "pr": "dabu'", "en": "hyena", "img": "p/dabu.jpg", "kind": "photo", "au": "a/dabu.mp3"}]}, {"id": "l16", "l": "ط", "ar": "حرف الطاء", "en": "Letter taa", "c": "1565C0", "n": "a/L16.mp3", "items": [{"ar": "طائِرَة", "pr": "taa'ira", "en": "airplane", "img": "p/taaira.jpg", "kind": "photo", "au": "a/taaira.mp3"}, {"ar": "طَماطِم", "pr": "tamaatim", "en": "tomatoes", "img": "p/tamaatim.jpg", "kind": "photo", "au": "a/tamaatim.mp3"}, {"ar": "طاووس", "pr": "taawoos", "en": "peacock", "img": "p/taawoos.jpg", "kind": "photo", "au": "a/taawoos.mp3"}, {"ar": "طَبْل", "pr": "tabl", "en": "drum", "img": "p/tabl.jpg", "kind": "photo", "au": "a/tabl.mp3"}, {"ar": "طاوِلَة", "pr": "taawila", "en": "table", "img": "p/taawila.jpg", "kind": "photo", "au": "a/taawila.mp3"}, {"ar": "طَيْر", "pr": "tayr", "en": "bird", "img": "p/tayr.jpg", "kind": "photo", "au": "a/tayr.mp3"}, {"ar": "طَريق", "pr": "tareeq", "en": "road", "img": "p/tareeq.jpg", "kind": "photo", "au": "a/tareeq.mp3"}, {"ar": "طَحين", "pr": "taheen", "en": "flour", "img": "p/taheen.jpg", "kind": "photo", "au": "a/taheen.mp3"}, {"ar": "طوب", "pr": "toob", "en": "brick", "img": "p/toob.jpg", "kind": "photo", "au": "a/toob.mp3"}]}, {"id": "l17", "l": "ظ", "ar": "حرف الظاء", "en": "Letter dhaa", "c": "AD1457", "n": "a/L17.mp3", "items": [{"ar": "ظَبْي", "pr": "dhabi", "en": "gazelle", "img": "p/dhabi.jpg", "kind": "photo", "au": "a/dhabi.mp3"}, {"ar": "ظَرْف", "pr": "dharf", "en": "envelope", "img": "p/dharf.jpg", "kind": "photo", "au": "a/dharf.mp3"}, {"ar": "ظِلّ", "pr": "dhill", "en": "shadow", "img": "p/dhill.jpg", "kind": "photo", "au": "a/dhill.mp3"}, {"ar": "ظَلام", "pr": "dhalaam", "en": "darkness", "img": "p/dhalaam.jpg", "kind": "photo", "au": "a/dhalaam.mp3"}]}, {"id": "l18", "l": "ع", "ar": "حرف العين", "en": "Letter 'ayn", "c": "2E7D32", "n": "a/L18.mp3", "items": [{"ar": "عِنَب", "pr": "'inab", "en": "grapes", "img": "p/inab.jpg", "kind": "photo", "au": "a/inab.mp3"}, {"ar": "عَيْن", "pr": "'ayn", "en": "eye", "img": "p/ayn.jpg", "kind": "photo", "au": "a/ayn.mp3"}, {"ar": "عَسَل", "pr": "'asal", "en": "honey", "img": "p/asal.jpg", "kind": "photo", "au": "a/asal.mp3"}, {"ar": "عُصْفور", "pr": "'usfoor", "en": "sparrow", "img": "p/usfoor.jpg", "kind": "photo", "au": "a/usfoor.mp3"}, {"ar": "عَنْكَبوت", "pr": "'ankaboot", "en": "spider", "img": "p/ankaboot.jpg", "kind": "photo", "au": "a/ankaboot.mp3"}, {"ar": "عَصير", "pr": "'aseer", "en": "juice", "img": "p/aseer.jpg", "kind": "photo", "au": "a/aseer.mp3"}, {"ar": "عَلَم", "pr": "'alam", "en": "flag", "img": "p/alam.jpg", "kind": "photo", "au": "a/alam.mp3"}, {"ar": "عَجَلَة", "pr": "'ajala", "en": "wheel", "img": "p/ajala.jpg", "kind": "photo", "au": "a/ajala.mp3"}, {"ar": "عُشّ", "pr": "'ush", "en": "nest", "img": "p/ush.jpg", "kind": "photo", "au": "a/ush.mp3"}, {"ar": "عَروسَة", "pr": "'aroosa", "en": "doll", "img": "p/aroosa.jpg", "kind": "photo", "au": "a/aroosa.mp3"}]}, {"id": "l19", "l": "غ", "ar": "حرف الغين", "en": "Letter ghayn", "c": "546E7A", "n": "a/L19.mp3", "items": [{"ar": "غَيْمَة", "pr": "ghayma", "en": "cloud", "img": "p/ghayma.jpg", "kind": "photo", "au": "a/ghayma.mp3"}, {"ar": "غُراب", "pr": "ghuraab", "en": "crow", "img": "p/ghuraab.jpg", "kind": "photo", "au": "a/ghuraab.mp3"}, {"ar": "غَسّالَة", "pr": "ghassaala", "en": "washing machine", "img": "p/ghassaala.jpg", "kind": "photo", "au": "a/ghassaala.mp3"}, {"ar": "غوريلّا", "pr": "ghoorilla", "en": "gorilla", "img": "p/ghoorilla.jpg", "kind": "photo", "au": "a/ghoorilla.mp3"}, {"ar": "غَزال", "pr": "ghazaal", "en": "gazelle", "img": "p/ghazaal.jpg", "kind": "photo", "au": "a/ghazaal.mp3"}, {"ar": "غُرْفَة", "pr": "ghurfa", "en": "room", "img": "p/ghurfa.jpg", "kind": "photo", "au": "a/ghurfa.mp3"}, {"ar": "غَوّاصَة", "pr": "ghawwaasa", "en": "submarine", "img": "p/ghawwaasa.jpg", "kind": "photo", "au": "a/ghawwaasa.mp3"}, {"ar": "غابَة", "pr": "ghaaba", "en": "forest", "img": "p/ghaaba.jpg", "kind": "photo", "au": "a/ghaaba.mp3"}, {"ar": "غُصْن", "pr": "ghusn", "en": "branch", "img": "p/ghusn.jpg", "kind": "photo", "au": "a/ghusn.mp3"}]}, {"id": "l20", "l": "ف", "ar": "حرف الفاء", "en": "Letter faa", "c": "F4511E", "n": "a/L20.mp3", "items": [{"ar": "فيل", "pr": "feel", "en": "elephant", "img": "p/feel.jpg", "kind": "photo", "au": "a/feel.mp3"}, {"ar": "فَراشَة", "pr": "faraasha", "en": "butterfly", "img": "p/faraasha.jpg", "kind": "photo", "au": "a/faraasha.mp3"}, {"ar": "فَراوِلَة", "pr": "faraawla", "en": "strawberry", "img": "p/faraawla.jpg", "kind": "photo", "au": "a/faraawla.mp3"}, {"ar": "فَأْر", "pr": "fa'r", "en": "mouse", "img": "p/far.jpg", "kind": "photo", "au": "a/far.mp3"}, {"ar": "فُسْتان", "pr": "fustaan", "en": "dress", "img": "p/fustaan.jpg", "kind": "photo", "au": "a/fustaan.mp3"}, {"ar": "فُرْشاة", "pr": "furshaat", "en": "brush", "img": "p/furshaat.jpg", "kind": "photo", "au": "a/furshaat.mp3"}, {"ar": "فِنْجان", "pr": "finjaan", "en": "cup", "img": "p/finjaan.jpg", "kind": "photo", "au": "a/finjaan.mp3"}, {"ar": "فُطْر", "pr": "futr", "en": "mushroom", "img": "p/futr.jpg", "kind": "photo", "au": "a/futr.mp3"}, {"ar": "فَهْد", "pr": "fahd", "en": "cheetah", "img": "p/fahd.jpg", "kind": "photo", "au": "a/fahd.mp3"}, {"ar": "فانوس", "pr": "faanoos", "en": "lantern", "img": "p/faanoos.jpg", "kind": "photo", "au": "a/faanoos.mp3"}]}, {"id": "l21", "l": "ق", "ar": "حرف القاف", "en": "Letter qaaf", "c": "6A1B9A", "n": "a/L21.mp3", "items": [{"ar": "قِطَّة", "pr": "qitta", "en": "cat", "img": "p/qitta.jpg", "kind": "photo", "au": "a/qitta.mp3"}, {"ar": "قَمَر", "pr": "qamar", "en": "moon", "img": "p/qamar.jpg", "kind": "photo", "au": "a/qamar.mp3"}, {"ar": "قَلَم", "pr": "qalam", "en": "pen", "img": "p/qalam.jpg", "kind": "photo", "au": "a/qalam.mp3"}, {"ar": "قارِب", "pr": "qaarib", "en": "boat", "img": "p/qaarib.jpg", "kind": "photo", "au": "a/qaarib.mp3"}, {"ar": "قِرْد", "pr": "qird", "en": "monkey", "img": "p/qird.jpg", "kind": "photo", "au": "a/qird.mp3"}, {"ar": "قَميص", "pr": "qamees", "en": "shirt", "img": "p/qamees.jpg", "kind": "photo", "au": "a/qamees.mp3"}, {"ar": "قِطار", "pr": "qitaar", "en": "train", "img": "p/qitaar.jpg", "kind": "photo", "au": "a/qitaar.mp3"}, {"ar": "قُنْفُذ", "pr": "qunfudh", "en": "hedgehog", "img": "p/qunfudh.jpg", "kind": "photo", "au": "a/qunfudh.mp3"}, {"ar": "قَمْح", "pr": "qamh", "en": "wheat", "img": "p/qamh.jpg", "kind": "photo", "au": "a/qamh.mp3"}, {"ar": "قَلْب", "pr": "qalb", "en": "heart", "img": "p/qalb.jpg", "kind": "ill", "au": "a/qalb.mp3"}]}, {"id": "l22", "l": "ك", "ar": "حرف الكاف", "en": "Letter kaaf", "c": "0277BD", "n": "a/L22.mp3", "items": [{"ar": "كَلْب", "pr": "kalb", "en": "dog", "img": "p/kalb.jpg", "kind": "photo", "au": "a/kalb.mp3"}, {"ar": "كُرَة", "pr": "kura", "en": "ball", "img": "p/kura.jpg", "kind": "photo", "au": "a/kura.mp3"}, {"ar": "كِتاب", "pr": "kitaab", "en": "book", "img": "p/kitaab.jpg", "kind": "photo", "au": "a/kitaab.mp3"}, {"ar": "كَعْكَة", "pr": "ka'ka", "en": "cake", "img": "p/ka_ka.jpg", "kind": "photo", "au": "a/ka_ka.mp3"}, {"ar": "كُرْسي", "pr": "kursi", "en": "chair", "img": "p/kursi.jpg", "kind": "photo", "au": "a/kursi.mp3"}, {"ar": "كَنْغَر", "pr": "kangar", "en": "kangaroo", "img": "p/kangar.jpg", "kind": "photo", "au": "a/kangar.mp3"}, {"ar": "كوب", "pr": "koob", "en": "mug", "img": "p/koob.jpg", "kind": "photo", "au": "a/koob.mp3"}, {"ar": "كَرَز", "pr": "karaz", "en": "cherries", "img": "p/karaz.jpg", "kind": "photo", "au": "a/karaz.mp3"}, {"ar": "كَهْف", "pr": "kahf", "en": "cave", "img": "p/kahf.jpg", "kind": "photo", "au": "a/kahf.mp3"}, {"ar": "كَنَبَة", "pr": "kanaba", "en": "sofa", "img": "p/kanaba.jpg", "kind": "photo", "au": "a/kanaba.mp3"}]}, {"id": "l23", "l": "ل", "ar": "حرف اللام", "en": "Letter laam", "c": "9E9D24", "n": "a/L23.mp3", "items": [{"ar": "لَيْمون", "pr": "laymoon", "en": "lemon", "img": "p/laymoon.jpg", "kind": "photo", "au": "a/laymoon.mp3"}, {"ar": "لَبَن", "pr": "laban", "en": "yogurt", "img": "p/laban.jpg", "kind": "photo", "au": "a/laban.mp3"}, {"ar": "لَحْم", "pr": "lahm", "en": "meat", "img": "p/lahm.jpg", "kind": "photo", "au": "a/lahm.mp3"}, {"ar": "لُعْبَة", "pr": "lu'ba", "en": "toy", "img": "p/lu_ba.jpg", "kind": "photo", "au": "a/lu_ba.mp3"}, {"ar": "لِسان", "pr": "lisaan", "en": "tongue", "img": "p/lisaan.jpg", "kind": "photo", "au": "a/lisaan.mp3"}, {"ar": "لُؤْلُؤ", "pr": "lu'lu'", "en": "pearl", "img": "p/lulu.jpg", "kind": "photo", "au": "a/lulu.mp3"}, {"ar": "لَقْلَق", "pr": "laqlaq", "en": "stork", "img": "p/laqlaq.jpg", "kind": "photo", "au": "a/laqlaq.mp3"}, {"ar": "لَيْل", "pr": "layl", "en": "night", "img": "p/layl.jpg", "kind": "photo", "au": "a/layl.mp3"}, {"ar": "لَوْز", "pr": "lawz", "en": "almonds", "img": "p/lawz.jpg", "kind": "photo", "au": "a/lawz.mp3"}]}, {"id": "l24", "l": "م", "ar": "حرف الميم", "en": "Letter meem", "c": "7E57C2", "n": "a/L24.mp3", "items": [{"ar": "مَوْز", "pr": "mawz", "en": "banana", "img": "p/mawz.jpg", "kind": "photo", "au": "a/mawz.mp3"}, {"ar": "مِفْتاح", "pr": "miftaah", "en": "key", "img": "p/miftaah.jpg", "kind": "photo", "au": "a/miftaah.mp3"}, {"ar": "مَسْجِد", "pr": "masjid", "en": "mosque", "img": "p/masjid.jpg", "kind": "photo", "au": "a/masjid.mp3"}, {"ar": "ماء", "pr": "maa'", "en": "water", "img": "p/maa.jpg", "kind": "photo", "au": "a/maa.mp3"}, {"ar": "مِقَصّ", "pr": "miqass", "en": "scissors", "img": "p/miqass.jpg", "kind": "photo", "au": "a/miqass.mp3"}, {"ar": "مَدْرَسَة", "pr": "madrasa", "en": "school", "img": "p/madrasa.jpg", "kind": "photo", "au": "a/madrasa.mp3"}, {"ar": "مَطَر", "pr": "matar", "en": "rain", "img": "p/matar.jpg", "kind": "photo", "au": "a/matar.mp3"}, {"ar": "مِشْط", "pr": "misht", "en": "comb", "img": "p/misht.jpg", "kind": "photo", "au": "a/misht.mp3"}, {"ar": "مَطْبَخ", "pr": "matbakh", "en": "kitchen", "img": "p/matbakh.jpg", "kind": "photo", "au": "a/matbakh.mp3"}, {"ar": "مِظَلَّة", "pr": "midhalla", "en": "umbrella", "img": "p/midhalla.jpg", "kind": "photo", "au": "a/midhalla.mp3"}]}, {"id": "l25", "l": "ن", "ar": "حرف النون", "en": "Letter noon", "c": "00ACC1", "n": "a/L25.mp3", "items": [{"ar": "نَمِر", "pr": "namir", "en": "tiger", "img": "p/namir.jpg", "kind": "photo", "au": "a/namir.mp3"}, {"ar": "نَحْلَة", "pr": "nahla", "en": "bee", "img": "p/nahla.jpg", "kind": "photo", "au": "a/nahla.mp3"}, {"ar": "نَخْلَة", "pr": "nakhla", "en": "palm tree", "img": "p/nakhla.jpg", "kind": "photo", "au": "a/nakhla.mp3"}, {"ar": "نافِذَة", "pr": "naafidha", "en": "window", "img": "p/naafidha.jpg", "kind": "photo", "au": "a/naafidha.mp3"}, {"ar": "نَجْمَة", "pr": "najma", "en": "star", "img": "p/najma.jpg", "kind": "ill", "au": "a/najma.mp3"}, {"ar": "نَمْلَة", "pr": "namla", "en": "ant", "img": "p/namla.jpg", "kind": "photo", "au": "a/namla.mp3"}, {"ar": "نَسْر", "pr": "nasr", "en": "eagle", "img": "p/nasr.jpg", "kind": "photo", "au": "a/nasr.mp3"}, {"ar": "نار", "pr": "naar", "en": "fire", "img": "p/naar.jpg", "kind": "photo", "au": "a/naar.mp3"}, {"ar": "نَظّارَة", "pr": "nadhdhaara", "en": "glasses", "img": "p/nadhdhaara.jpg", "kind": "photo", "au": "a/nadhdhaara.mp3"}, {"ar": "نَعامَة", "pr": "na'aama", "en": "ostrich", "img": "p/na_aama.jpg", "kind": "photo", "au": "a/na_aama.mp3"}]}, {"id": "l26", "l": "هـ", "ar": "حرف الهاء", "en": "Letter haa", "c": "8D6E63", "n": "a/L26.mp3", "items": [{"ar": "هُدْهُد", "pr": "hudhud", "en": "hoopoe", "img": "p/hudhud.jpg", "kind": "photo", "au": "a/hudhud.mp3"}, {"ar": "هاتِف", "pr": "haatif", "en": "phone", "img": "p/haatif.jpg", "kind": "photo", "au": "a/haatif.mp3"}, {"ar": "هِلال", "pr": "hilaal", "en": "crescent", "img": "p/hilaal.jpg", "kind": "photo", "au": "a/hilaal.mp3"}, {"ar": "هَرَم", "pr": "haram", "en": "pyramid", "img": "p/haram.jpg", "kind": "photo", "au": "a/haram.mp3"}, {"ar": "هَدِيَّة", "pr": "hadiyya", "en": "gift", "img": "p/hadiyya.jpg", "kind": "photo", "au": "a/hadiyya.mp3"}, {"ar": "هَمْبَرْغَر", "pr": "hamburgar", "en": "burger", "img": "p/hamburgar.jpg", "kind": "photo", "au": "a/hamburgar.mp3"}, {"ar": "هَيْل", "pr": "hayl", "en": "cardamom", "img": "p/hayl.jpg", "kind": "photo", "au": "a/hayl.mp3"}, {"ar": "هِليكوبْتَر", "pr": "heelikoobtar", "en": "helicopter", "img": "p/heelikoobtar.jpg", "kind": "photo", "au": "a/heelikoobtar.mp3"}]}, {"id": "l27", "l": "و", "ar": "حرف الواو", "en": "Letter waaw", "c": "2E7D32", "n": "a/L27.mp3", "items": [{"ar": "وَرْدَة", "pr": "warda", "en": "rose", "img": "p/warda.jpg", "kind": "photo", "au": "a/warda.mp3"}, {"ar": "وَرَقَة", "pr": "waraqa", "en": "leaf", "img": "p/waraqa.jpg", "kind": "photo", "au": "a/waraqa.mp3"}, {"ar": "وِسادَة", "pr": "wisaada", "en": "pillow", "img": "p/wisaada.jpg", "kind": "photo", "au": "a/wisaada.mp3"}, {"ar": "وَزَّة", "pr": "wazza", "en": "goose", "img": "p/wazza.jpg", "kind": "photo", "au": "a/wazza.mp3"}, {"ar": "وادي", "pr": "waadi", "en": "valley", "img": "p/waadi.jpg", "kind": "photo", "au": "a/waadi.mp3"}, {"ar": "وِعاء", "pr": "wi'aa'", "en": "bowl", "img": "p/wiaa.jpg", "kind": "photo", "au": "a/wiaa.mp3"}, {"ar": "وِشاح", "pr": "wishaah", "en": "scarf", "img": "p/wishaah.jpg", "kind": "photo", "au": "a/wishaah.mp3"}, {"ar": "وَرَل", "pr": "waral", "en": "monitor lizard", "img": "p/waral.jpg", "kind": "photo", "au": "a/waral.mp3"}, {"ar": "وِسام", "pr": "wisaam", "en": "medal", "img": "p/wisaam.jpg", "kind": "photo", "au": "a/wisaam.mp3"}, {"ar": "وَحْش", "pr": "wahsh", "en": "monster", "img": "p/wahsh.jpg", "kind": "ill", "au": "a/wahsh.mp3"}]}, {"id": "l28", "l": "ي", "ar": "حرف الياء", "en": "Letter yaa", "c": "EC407A", "n": "a/L28.mp3", "items": [{"ar": "يَد", "pr": "yad", "en": "hand", "img": "p/yad.jpg", "kind": "photo", "au": "a/yad.mp3"}, {"ar": "يَمامَة", "pr": "yamaama", "en": "dove", "img": "p/yamaama.jpg", "kind": "photo", "au": "a/yamaama.mp3"}, {"ar": "يَقْطين", "pr": "yaqteen", "en": "pumpkin", "img": "p/yaqteen.jpg", "kind": "photo", "au": "a/yaqteen.mp3"}, {"ar": "ياسَمين", "pr": "yaasameen", "en": "jasmine", "img": "p/yaasameen.jpg", "kind": "photo", "au": "a/yaasameen.mp3"}, {"ar": "يَخْت", "pr": "yakht", "en": "yacht", "img": "p/yakht.jpg", "kind": "photo", "au": "a/yakht.mp3"}, {"ar": "يوسُفي", "pr": "yoosufi", "en": "mandarin", "img": "p/yoosufi.jpg", "kind": "photo", "au": "a/yoosufi.mp3"}, {"ar": "يَرَقَة", "pr": "yaraqa", "en": "caterpillar", "img": "p/yaraqa.jpg", "kind": "photo", "au": "a/yaraqa.mp3"}, {"ar": "يَنْبوع", "pr": "yanboo'", "en": "spring", "img": "p/yanboo.jpg", "kind": "photo", "au": "a/yanboo.mp3"}, {"ar": "ياقوت", "pr": "yaaqoot", "en": "ruby", "img": "p/yaaqoot.jpg", "kind": "photo", "au": "a/yaaqoot.mp3"}]}], "cred": [["ajala", "Landesmuseum_Württemberg_Kelten_011.4.jpg"], ["akhtaboot", "Octopus2.jpg"], ["alam", "Flag_of_the_United_Arab_Emirates.svg"], ["ananaas", "കൈതച്ചക്ക.jpg"], ["ankaboot", "Araneus_diadematus_(Clerck,_1757).JPG"], ["arnab", "Oryctolagus_cuniculus_Rcdo.jpg"], ["aroosa", "Poupée_c_1870.jpg"], ["aruzz", "Meshi_001.jpg"], ["asad", "020_The_lion_king_Snyggve_in_the_Serengeti_National_Park_Photo_by_Giles_Laurent.jpg"], ["asal", "Runny_hunny.jpg"], ["aseer", "Orange_juice_1.jpg"], ["ayn", "Human_eye_with_blood_vessels.jpg"], ["baab", "Front_door_refinishing.jpg"], ["baaloon", "Congrats_bqt.jpg"], ["bahr", "Beach_at_Fort_Lauderdale.jpg"], ["baqara", "Cow_(Fleckvieh_breed)_Oeschinensee_Slaunger_2009-07-07.jpg"], ["batta", "Anas_platyrhynchos_male_female_quadrat.jpg"], ["bayd", "6-Pack-Chicken-Eggs.jpg"], ["bayt", "Nordisches_Einfamilienhaus.jpg"], ["bitteekh", "Taiwan_2009_Tainan_City_Organic_Farm_Watermelon_FRD_7962.jpg"], ["booma", "American_Barn_Owl_(Tyto_furcata_guatemalae),_Orange_Walk.jpg"], ["burtuqaal", "Oranges_-_whole-halved-segment.jpg"], ["dabaab", "A_foggy_winter_morning.jpg"], ["dabb", "Uromastyx_aegyptia_2.jpg"], ["dabu", "Spotted_hyena_(Crocuta_crocuta).jpg"], ["dafeera", "Braid_final_rot.jpg"], ["dajaaja", "Hen_at_Parafield_Poultry_Farm(GN09714).jpg"], ["dalla", "Dalleh.JPG"], ["daraj", "At_Victoria_and_Albert_Museum_2025_018.jpg"], ["darraaja", "Left_side_of_Flying_Pigeon.jpg"], ["daw", "Incandescent_bulb_lamp_glowing_on_a_desk_at_night.jpg"], ["daynaasoor", "Tyrannosaurus_Rex_Holotype.jpg"], ["deek", "Male_and_female_chicken_sitting_together.jpg"], ["dhabi", "Mountain_gazelle_(Gazella_gazella)_and_Arabian_sand_gazelle_(Gazella_marica).jpg"], ["dhahab", "Gold-crystals.jpg"], ["dhalaam", "Scottish_Dark_Sky_Observatory,_night_sky,_Dec_2017.jpg"], ["dharf", "Envelope_-_Boonville_Address-000.jpg"], ["dhib", "Eurasian_wolf_2.jpg"], ["dhill", "The_shadow_of_a_musician_playing_transverse_flute.jpg"], ["dhiraa", "Extended_arm.jpg"], ["dhubaaba", "Common_house_fly,_Musca_domestica.jpg"], ["dhufr", "Nail_svg_hariadhi.svg"], ["dhura", "Yellow_Corn_on_the_Cob_(35115370841).jpg"], ["difda", "Red-eyed_Leaf_Frog_(49661076226).jpg"], ["dirham", "UAE_1_dirham_coin,_reverse.jpg"], ["dooda", "Eisenia_foetida_R.H._(8).JPG"], ["dubb", "2010-kodiak-bear-1.jpg"], ["dulfeen", "Tursiops_truncatus_01.jpg"], ["faanoos", "Lanterns_from_below.JPG"], ["fahd", "Male_cheetah_facing_left_in_South_Africa.jpg"], ["far", "Mouse_white_background.jpg"], ["faraasha", "Fesoj_-_Papilio_machaon_(by).jpg"], ["faraawla", "Garden_strawberry_(Fragaria_×_ananassa)_single2.jpg"], ["feel", "178_Male_African_bush_elephant_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg"], ["finjaan", "Cup_and_Saucer_LACMA_47.35.6a-b_(1_of_3).jpg"], ["furshaat", "Toothbrush_20050716_004.jpg"], ["fustaan", "Afternoon_ensemble_MET_63.212a-b_CP4.jpg"], ["futr", "Sparrige_Schüppling_(Pholiota_squarrosa).jpg"], ["ghaaba", "Aerial_view_of_the_Amazon_Rainforest.jpg"], ["ghassaala", "LG_드럼세탁기와_식기세척기,_영국서_물사용_효율_최우수_제품_수상.jpg"], ["ghawwaasa", "US_Navy_040730-N-1234E-002_PCU_Virginia_(SSN_774)_returns_to_the_General_Dynamics_Electric_Boat_shipyard.jpg"], ["ghayma", "Altocumulus_and_cumulus_over_Gåseberg.jpg"], ["ghazaal", "Dorcasgazellemarwell.jpg"], ["ghoorilla", "Gorille_des_plaines_de_l'ouest_à_l'Espace_Zoologique.jpg"], ["ghuraab", "Corvus_corone_-near_Canford_Cliffs,_Poole,_England-8.jpg"], ["ghurfa", "Berlin_Villa_Borsig_Tegel_asv2019-08_img09.jpg"], ["ghusn", "Branches_(DSC_0326).jpg"], ["haafila", "IC_CE_school_bus_(shortened_chassis).jpg"], ["haatif", "Wikipedia_homepage_on_a_large_Android_phone,_2015-04-16.jpg"], ["habl", "Cordage_en_chanvre.jpg"], ["hadiyya", "Brown_gift_box_with_red_ribbon_and_bow.jpg"], ["halazoon", "Snail.jpg"], ["haleeb", "Glass_of_Milk_(33657535532).jpg"], ["halwa", "Candy_in_Damascus.jpg"], ["hamburgar", "RedDot_Burger.jpg"], ["haqeeba", "Rucksack1.jpg"], ["haram", "Great_Pyramid_of_Giza_-_Pyramid_of_Khufu.jpg"], ["hayl", "02017_0119_Kardamom,_Winter_in_den_Beskiden.jpg"], ["heelikoobtar", "VH-SUF_Taking_Off.jpg"], ["hidhaa", "A_pair_of_kids_sneakers.jpg"], ["hilaal", "Waxing_Crescent_Moon_in_Kurseong_September_2026_by_Paramanu_Sarkar.jpg"], ["himaar", "Donkey_in_Clovelly,_North_Devon,_England.jpg"], ["hisaan", "Nokota_Horses_cropped.jpg"], ["hoot", "Humpback_whale_breaching_off_Cabo_San_Lucas.jpg"], ["hudhud", "Israel._Eurasian_Hoopoe_(6497645007).jpg"], ["ibra", "A_depiction_of_needle.JPG"], ["ibreeq", "Black_tea_pot_cropped.jpg"], ["inab", "Grapes,_Rostov-on-Don,_Russia.jpg"], ["jaamoos", "Water_buffalo_at_Rinca.jpg"], ["jabal", "Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg"], ["jamal", "Camelus_dromedarius_in_Nuweiba.jpg"], ["jaras", "Columbus_Simpson,_Portable_Brass_Hand_Bell,_c._1936,_NGA_20880.jpg"], ["jawrab", "HandKnittedWhiteLaceSock.jpg"], ["jazar", "Vegetable-Carrot-Bundle-wStalks.jpg"], ["jazeera", "Hawaje-NoRedLine.jpg"], ["jisr", "Bridge_Alcantara.JPG"], ["jubn", "Cheese_platter.jpg"], ["jundub", "American_Bird_Grasshopper.jpg"], ["ka_ka", "Italy_-_birthday_cake_with_candles_5.jpg"], ["kahf", "Lechuguilla_Cave_Pearlsian_Gulf.jpg"], ["kalb", "Huskiesatrest.jpg"], ["kanaba", "2009-05-16_Main_office_lobby_at_Hampton_Forest_Apartments.jpg"], ["kangar", "Forester_kangaroo_(Macropus_giganteus_tasmaniensis)_juvenile_hopping_Esk_Valley.jpg"], ["karaz", "Cherry_season_(48216568227).jpg"], ["khareeta", "World_Map_1689.JPG"], ["kharoof", "Flock_of_sheep.jpg"], ["khashab", "Wood_from_victoria_mountain_ash.jpg"], ["khass", "Iceberg_lettuce_in_SB.jpg"], ["khayma", "Dome_tent_in_the_BWCA_(CDM11452CT).jpg"], ["khiyaar", "ARS_cucumber.jpg"], ["khizaana", "Serwantka.JPG"], ["khookh", "Illustration_Prunus_persica_clean_no_descr.jpg"], ["khubz", "Korb_mit_Brötchen.JPG"], ["khuffaash", "Big-eared-townsend-fledermaus.jpg"], ["kitaab", "Gutenberg_Bible,_Lenox_Copy,_New_York_Public_Library,_2009._Pic_01.jpg"], ["koob", "Mug_of_Tea.JPG"], ["kura", "Soccer_Ball_(27181880724).jpg"], ["kursi", "Set_of_fourteen_side_chairs_MET_DP110780.jpg"], ["laban", "Joghurt.jpg"], ["lahm", "FoodMeat.jpg"], ["laqlaq", "White_stork_(Ciconia_ciconia)_Białowieza.jpg"], ["lawz", "Almonds_-_in_shell,_shell_cracked_open,_shelled,_blanched.jpg"], ["layl", "Savault_Chapel_Under_Milky_Way_BLS.jpg"], ["laymoon", "P1030323.JPG"], ["lisaan", "زبان_tongue.jpg"], ["lu_ba", "Teddy_bear_on_the_window_sill_02.jpg"], ["lulu", "Various_pearls.jpg"], ["maa", "Clean_water_for_a_village_in_West_Lombok_(10686572086).jpg"], ["madrasa", "Школа_№2_г._Краснотурьинска.jpg"], ["matar", "Rain_Umbrella_01.JPG"], ["matbakh", "Julie_child_kitchen.jpg"], ["mawz", "Bananavarieties.jpg"], ["midhalla", "M0354_000727-005_1.jpg"], ["miftaah", "Solex_99_30_padlock_with_keys_(DSCF2659).jpg"], ["miqass", "Standard_household_scissors.jpg"], ["misht", "Plastic_comb,_2015-06-07.jpg"], ["na_aama", "Struthio_camelus_-_Etosha_2014_(3).jpg"], ["naafidha", "Fischerkirche_(window),_Born_a._Darß.jpg"], ["naar", "Large_bonfire.jpg"], ["nadhdhaara", "2023_Okulary_korekcyjne.jpg"], ["nahla", "Apis_mellifera_Western_honey_bee.jpg"], ["nakhla", "Dates005.jpg"], ["namir", "Bengal_tiger_(Panthera_tigris_tigris)_female_3_crop.jpg"], ["namla", "Red_Ant_-_March_2025.jpg"], ["nasr", "015_Wild_Golden_Eagle_in_flight_at_Pfyn-Finges_(Switzerland)_Photo_by_Giles_Laurent.jpg"], ["qaarib", "Portland_Pudgy_safety_dinghy,_rowing.JPG"], ["qalam", "Colored_pencils_chevre.jpg"], ["qamar", "FullMoon2010.jpg"], ["qamees", "Charvet_shirt.jpg"], ["qamh", "Vehnäpelto_6.jpg"], ["qird", "Ubud_Monkey_Family.jpg"], ["qitaar", "Поезд_на_фоне_горы_Шатрище._Воронежская_область.jpg"], ["qitta", "Siam_lilacpoint.jpg"], ["qunfudh", "Igel.JPG"], ["raadyo", "Icom_IC-R7000_radio_receiver.jpg"], ["raff", "Interior_of_Bibliothèque_Mazarine_003.JPG"], ["raml", "Libya_4608_Idehan_Ubari_Dunes_Luca_Galuzzi_2007.jpg"], ["roboot", "Ha_Ha_Toys,_Planet_Robot,_Blue,_Main_Street_Toys_Exclusive,_Double_Dose.jpg"], ["roobyaan", "Palaemon_serratus_Croazia.jpg"], ["rummaan", "Pomegranate_Juice_(2019).jpg"], ["rutab", "Dates005.jpg"], ["saa_a", "2010-07-20_Black_windup_alarm_clock_face.jpg"], ["saaboon", "Handmade_soap_cropped_and_simplified.jpg"], ["saaroukh", "Soyuz_TMA-9_launch.jpg"], ["sabbaar", "Various_Cactaceae.jpg"], ["sadafa", "Conchiglie_Seashells_01.jpg"], ["safeena", "Containerterminal_Altenwerder_(Hamburg-Altenwerder).Iris_Bolten.4.phb.ajb.jpg"], ["sahn", "Vegetarian_Pizza.jpg"], ["sahraa", "Rub_al_Khali_002.JPG"], ["sajjaada", "Unknown,_Iran_-_Silk_Carpet_-_Google_Art_Project_(1901828).jpg"], ["sakhra", "Marsh_Butte_and_Geikie_Peak,_Grand_Canyon.jpg"], ["samaka", "Balantiocheilos_melanopterus_-_Karlsruhe_Zoo_02_(cropped).jpg"], ["saqr", "Falco_cherrug_(Marek_Szczepanek).jpg"], ["sareer", "2008-04-12_Freilichtmuseum_Detmold_(11).jpg"], ["sayyaara", "White_Toyota_Corolla_sedan_in_San_Jose_California_dllu.jpg"], ["shaahina", "2001_Ford_F-250_Super_Duty_XL_regular_cab_flatbed,_front_left,_05-17-2025.jpg"], ["shaati", "Beach_at_Fort_Lauderdale.jpg"], ["shaay", "Longjing_tea_steeping_in_gaiwan.jpg"], ["shajara", "Usamljeni_jasen_-_panoramio_(cropped).jpg"], ["sham_a", "LA2_Skultuna_kontorsljusstake.jpg"], ["shammaam", "Meloen_vrucht_met_bloem.jpg"], ["shams", "Bright_Shades_Of_Sky_Ans_Sparkling_Sun_,_Aligarh.jpg"], ["shateera", "Bacon,_lettuce,_tomato,_and_avocado.jpg"], ["shawka", "Assorted_forks.jpg"], ["shokolaata", "Three_Bars_(1).jpg"], ["sinjaab", "Squirrel_posing.jpg"], ["soos", "Fuzzy_yellow_chicks_in_a_brooder.jpg"], ["sukkar", "Sucre_blanc_cassonade_complet_rapadura.jpg"], ["sulahfaa", "Green_sea_turtle_(Chelonia_mydas)_Moorea.jpg"], ["sullam", "Ladder.webp"], ["sundooq", "Wooden_box_at_farmhouse_at_Kelvin_A._Lewis_farm_in_Creeds.jpg"], ["taaira", "United_Airlines_Boeing_777-200_Meulemans.jpg"], ["taaj", "Saint_Edward's_Crown.jpg"], ["taaksi", "TAXI.jpg"], ["taawila", "Beautiful_Baroque_gilded_table_from_the_Cinquantenaire_Museum_(Bruxelles,_Belgium).jpg"], ["taawoos", "Peacock_on_tree_(52077240794).jpg"], ["tabl", "DrumMozartRegiment.jpg"], ["taheen", "Soy_powder.jpg"], ["tamaatim", "Tomato_je.jpg"], ["tamr", "DriedDates.JPG"], ["tannoora", "Skirt.jpg"], ["tareeq", "Erlangen_Bundesautobahn_73_Auffahrt_Luftbild-20230422-RM-165734.jpg"], ["tayr", "Kleiber_Flug.jpg"], ["tays", "Hausziege_04.jpg"], ["teen", "Ficus_carica_L,_1771.jpg"], ["thalab", "Portrait_of_a_red_fox_in_Rautas_fjällurskog_(cropped).jpg"], ["thalj", "Bonhomme_de_neige_2.jpg"], ["thallaaja", "Open_refrigerator_with_food_at_night.jpg"], ["thawr", "A_Friesian_Bull,_Llandeilo_Graban_-_geograph.org.uk_-_579885.jpg"], ["thimaar", "Fruit_Platter-_Seasonal_Fruits.jpg"], ["thoom", "Garlic_bulbs_and_cloves.jpg"], ["thubaan", "Trimeresurus_sabahi_fucatus,_Banded_pit_viper_-_Takua_Pa_District,_Phang-nga_Province_(46710893582).jpg"], ["thurayya", "Versailles_Château_de_Versailles_Innen_Grande_Galerie_05.jpg"], ["tilfaaz", "Museum_für_Kommunikation_-_Depot_Heusenstamm_-_Technik_12_-_Flickr_-_KlausNahr.jpg"], ["timsaah", "NileCrocodile.jpg"], ["toob", "Brick.jpg"], ["tuffaaha", "Pink_lady_and_cross_section.jpg"], ["turaab", "Stagnogley.JPG"], ["usfoor", "House_sparrow_male_in_Prospect_Park_(53532).jpg"], ["ush", "Acrocephalus_arundinaceus_nest_(cropped).jpg"], ["waadi", "18_Wadi_Ghuweir_Trail_to_Feynan_-_In_the_Oasis_-_panoramio.jpg"], ["waral", "Varanus_griseus_griseus_349843922.jpg"], ["waraqa", "Lisc_lipy.jpg"], ["warda", "Rosa_rubiginosa_1.jpg"], ["wazza", "Anser_anser_1_(Piotr_Kuczynski)_(cropped).jpg"], ["wiaa", "China,_Jiangxi_province,_Jingdezhen,_Ming_dynasty_(1368-1644),_Xuande_mark_-_Bowl_with_Decoration_of_the_\"Three_Friends\"_-_1953.631_-_Cleveland_Museum_of_Art.tif"], ["wisaada", "Pillows_on_a_hotel_bed.jpg"], ["wisaam", "1964_Winter_Olympics_medals.JPG"], ["wishaah", "100%_Kaschmir_Wolle_vonk_kaschmirprodukte.de.jpg"], ["yaaqoot", "Corundum-215330.jpg"], ["yaasameen", "Common_Jasmine.jpg"], ["yad", "Hand,_fingers_-_back.jpg"], ["yakht", "Bavaria_Cruiser_45.jpg"], ["yamaama", "Columba_livia_(Rock_Dove,_wild),_Duncansby_Head,_Caithness,_Scotland_1.jpg"], ["yanboo", "Big_Spring_Missouri_1-02Aug08.jpg"], ["yaqteen", "FrenchMarketPumpkinsB.jpg"], ["yaraqa", "Chenille_de_Grand_porte_queue_(macaon).jpg"], ["yoosufi", "Citrus_reticulata_April_2013_Nordbaden.JPG"], ["zabeeb", "Raisins_01.jpg"], ["zahra", "Sunflower_close-up15.jpg"], ["zanjabeel", "Koeh-146-no_text.jpg"], ["zaraafa", "Giraffe_Mikumi_National_Park.jpg"], ["zawraq", "Dinghy.jpg"], ["zayt", "Oliven_V1.jpg"], ["zaytoon", "Olivesfromjordan.jpg"], ["zirr", "Reserveknapper_til_Hans'_uniform.jpg"], ["zubda", "Švédský_koláč_naruby_904_(cropped).JPG"], ["zujaaja", "Bouteille.jpg"]]};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const marks=/[ً-ْٰ]/;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SECS=D.S;const ALL={items:D.S.flatMap(s=>s.items)};
+let cur=SECS[0];
+// bubbles
+$('bub').innerHTML=Array.from({length:9},(_,i)=>`<i style="left:${(i*37)%100}%;width:${40+(i*23)%70}px;height:${40+(i*23)%70}px;animation-delay:-${i*1.6}s;animation-duration:${12+(i%4)*3}s"></i>`).join('');
+// audio
+const player=new Audio();let token=0;
+let AUD={};try{fetch('audio.json').then(r=>r.ok?r.json():{}).then(j=>{AUD=j||{}}).catch(()=>{})}catch(e){}
+function say(src){return new Promise(res=>{try{player.pause();player.src=AUD[src]?'data:audio/mpeg;base64,'+AUD[src]:src;player.onended=res;player.onerror=res;const p=player.play();if(p)p.catch(res)}catch(e){res()}})}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function setColor(c){document.body.style.setProperty('--c','#'+c);document.documentElement.style.setProperty('--c','#'+c)}
+function show(v){for(const s of document.querySelectorAll('.view'))s.classList.toggle('on',s.id===v);scrollTo(0,0)}
+// home
+function tiles(){
+  $('tiles').innerHTML=SECS.map((s,i)=>`<button class="tile" type="button" data-i="${i}" style="--tc:#${s.c}" aria-pressed="${s===cur}" aria-label="${esc(s.en)}"><div><span>${esc(s.l)}</span><small>${esc(s.en.replace('Letter ','').replace(/'/g,''))}</small></div></button>`).join('');
+  $('picked').textContent=`${cur.en} · ${cur.items.length} words`;
+  setColor(cur.c);
+}
+$('tiles').addEventListener('click',e=>{const b=e.target.closest('.tile');if(!b)return;cur=SECS[+b.dataset.i];tiles();
+  if(cur.n)say(cur.n)});
+for(const b of document.querySelectorAll('[data-home]'))b.addEventListener('click',()=>{token++;player.pause();show('home')});
+// ---------- WATCH ----------
+let wi=0,paused=false,list=[];
+function phHtml(it){return it.img?`<div class="ph${it.kind==='ill'?' ill':''} go-zoom"><img src="${esc(it.img)}" alt="${esc(it.en)}"></div>`:`<div class="ph" style="display:grid;place-items:center"><div style="width:62%;aspect-ratio:1;border-radius:50%;border:22px solid #f9a825"></div></div>`}
+function wordSpans(w,hl){if(!hl)return esc(w);let i=1;while(i<w.length&&marks.test(w[i]))i++;return `<b>${esc(w.slice(0,i))}</b>${esc(w.slice(i))}`}
+function dots(){$('wDots').innerHTML=list.map((_,i)=>`<b class="${i<=wi?'on':''}"></b>`).join('')}
+async function playWord(t){
+  const isIntro=wi===0;
+  dots();
+  if(isIntro){
+    const n=cur.n?{au:cur.n}:null;
+    $('stage').innerHTML=`<div class="intro"><div class="big go-pop">${esc(cur.l)}</div><h2 class="ar go-up">${esc(cur.ar)}</h2><p>${esc(cur.en)} · ${cur.items.length} words</p></div>`;
+    if(n){await wait(500);if(t!==token)return;await say(n.au);await wait(300);if(t!==token)return;await say(n.au)}
+    await wait(1800);return;
+  }
+  const it=list[wi];
+  const hl=true;
+  $('stage').innerHTML=`<span class="badge go-pop">${esc(cur.l)}</span>${phHtml(it)}<div class="word ar">${wordSpans(it.ar,hl)}</div><div class="pr">${esc(it.pr)}</div><div class="en">${esc(it.en)}</div>`;
+  $('stage').classList.remove('go-pop');void $('stage').offsetWidth;$('stage').classList.add('go-pop');
+  await wait(450);if(t!==token)return;
+  $('stage').querySelector('.word').classList.add('write');
+  await wait(reduce?0:700);
+  if(t!==token)return;
+  for(const c of ['pr','en'])$('stage').querySelector('.'+c).classList.add('go-up');
+  await say(it.au);if(t!==token)return;
+  await wait(900);if(t!==token)return;
+  await say(it.au);if(t!==token)return;
+  await wait(1500);
+}
+async function runWatch(){
+  const t=++token;
+  while(wi<list.length&&t===token){
+    await playWord(t);
+    if(t!==token)return;
+    while(paused){await wait(200);if(t!==token)return}
+    wi++;
+  }
+  if(t===token&&wi>=list.length)finish('watch');
+}
+function startWatch(){list=[null,...cur.items];wi=0;paused=false;setIcon();$('wTitle').textContent=cur.en;show('watch');runWatch()}
+function setIcon(){$('wIcon').innerHTML=paused?'<path d="M7 5l12 7-12 7z" fill="#222"/>':'<path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="#222"/>';$('wPlay').setAttribute('aria-label',paused?'Play':'Pause')}
+$('goWatch').addEventListener('click',startWatch);
+$('wPlay').addEventListener('click',()=>{paused=!paused;setIcon();if(paused)player.pause()});
+$('wNext').addEventListener('click',()=>{if(wi<list.length-1){wi++;paused=false;setIcon();restart()}});
+$('wPrev').addEventListener('click',()=>{if(wi>0){wi--;paused=false;setIcon();restart()}});
+$('wAgain').addEventListener('click',()=>{const it=list[wi];if(it)say(it.au)});
+function restart(){token++;player.pause();const t=token;(async()=>{while(wi<list.length&&t===token){await playWord(t);if(t!==token)return;while(paused){await wait(200);if(t!==token)return}wi++}if(t===token)finish('watch')})()}
+// ---------- PLAY ----------
+const ANIMALS=['🐒','🐸','🐱','🐻','🐰','🐼','🦊','🐨','🐯','🦁','🐮','🐷','🐵','🐔','🐧','🐦','🐤','🦉','🐢','🐙','🦒','🦓','🐘','🦔','🐿️','🦘','🐞','🐝'];
+// one game per letter (same order as the letters)
+const GAMES=[
+ {t:'Listen and tap the picture',p:'audio',o:'pics',n:4,st:'grid'},
+ {t:'Pop the right balloon',p:'audio',o:'pics',n:3,st:'balloon'},
+ {t:'Which word is this picture?',p:'image',o:'words',n:3,st:'list'},
+ {t:'Which one starts with the letter?',p:'letter',o:'pics',n:4,st:'grid',mode:'starts'},
+ {t:'Catch the right fish',p:'audio',o:'pics',n:3,st:'fish'},
+ {t:'Tap the right bubble',p:'audio',o:'pics',n:3,st:'bubble'},
+ {t:'Yes or no?',p:'tf',o:'yesno',st:'two'},
+ {t:'Find the odd one out',p:'letter',o:'pics',n:4,st:'grid',mode:'odd'},
+ {t:'Read and tap the picture',p:'word',o:'pics',n:3,st:'grid3'},
+ {t:'Guess the blurry picture',p:'blur',o:'words',n:3,st:'list'},
+ {t:'Zoom detective',p:'zoom',o:'pics',n:3,st:'grid3'},
+ {t:'Find the missing letter',p:'missing',o:'letters',n:3,st:'letters'},
+ {t:'Ride the right train car',p:'audio',o:'pics',n:3,st:'train'},
+ {t:'Tap the right cloud',p:'audio',o:'pics',n:3,st:'cloud'},
+ {t:'Hear the letter, tap it',p:'lsound',o:'letters',n:4,st:'letters'},
+ {t:'Find the same letter',p:'lshape',o:'letters',n:4,st:'letters'},
+ {t:'This or that?',p:'audio',o:'pics',n:2,st:'two'},
+ {t:'Catch the falling picture',p:'audio',o:'pics',n:3,st:'fall'},
+ {t:'Tap the twinkling star',p:'audio',o:'pics',n:4,st:'star'},
+ {t:'Pop the word balloon',p:'image',o:'words',n:3,st:'wballoon'},
+ {t:'Open the right gift',p:'audio',o:'pics',n:3,st:'gift'},
+ {t:'Read: yes or no?',p:'tfword',o:'yesno',st:'two'},
+ {t:'Zoom and read',p:'zoom',o:'words',n:3,st:'list'},
+ {t:'Peekaboo picture',p:'peek',o:'words',n:3,st:'list'},
+ {t:'Which letter does it start with?',p:'image',o:'letters',n:3,st:'letters',mode:'first'},
+ {t:'Which word does NOT belong?',p:'letter',o:'words',n:4,st:'list',mode:'oddw'},
+ {t:'Flip the cards',p:'audio',o:'pics',n:4,st:'cards'},
+ {t:'Surprise mix!',mix:true}];
+let step=0,answered=false,Q=null,lastPr='',G=null,lastG=-1;
+const STEPS=10;
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const letterIndex=()=>SECS.indexOf(cur);
+const noMarks=w=>w.replace(/[ً-ْٰ]/g,'');
+const OTHERS=()=>SECS.filter(s=>s!==cur).flatMap(s=>s.items.filter(x=>x.img));
+function placeClimber(dir){
+  const c=$('climber');c.textContent=ANIMALS[letterIndex()%ANIMALS.length];
+  c.style.bottom=`calc(${step/STEPS*100}% * .86 + 2%)`;
+  c.classList.remove('up','down');void c.offsetWidth;if(dir)c.classList.add(dir);
+  $('stepTxt').textContent=`${step} / ${STEPS}`;
+}
+function startPlay(){step=0;show('play');token++;placeClimber();ask()}
+function pickWord(){const pool=cur.items.filter(x=>x.img&&x.pr!==lastPr);const it=rnd(pool.length?pool:cur.items);lastPr=it.pr;return it}
+function others(n,from,not){return shuffle(from.filter(x=>x.img&&x.pr!==not.pr&&noMarks(x.ar)!==noMarks(not.ar))).slice(0,n)}
+const picBtn=(o,i)=>`<button class="opt${o.kind==='ill'?' ill':''}" type="button" data-k="${esc(o.pr)}" data-au="${esc(o.au)}" style="--d:${(i*0.37).toFixed(2)}s;--i:${i}" aria-label="${esc(o.en)}"><img src="${esc(o.img)}" alt=""><span class="lab ar">${esc(o.ar)}</span></button>`;
+const wordBtn=(o,i)=>`<button class="wopt ar" type="button" data-k="${esc(o.pr)}" data-au="${esc(o.au)}" style="--d:${(i*0.37).toFixed(2)}s">${esc(o.ar)}</button>`;
+const letBtn=(l,i)=>`<button class="lopt ar" type="button" data-k="${esc(l)}" style="--d:${(i*0.2).toFixed(2)}s">${esc(l)}</button>`;
+const img=(it,cls='')=>`<img class="qimg ${cls}${it.kind==='ill'?' ill':''}" src="${esc(it.img)}" alt="">`;
+const txt=(a,b)=>`<span class="qt">${a}<small>${b}</small></span>`;
+function ask(){
+  answered=false;
+  const gi=letterIndex()%GAMES.length;let g=GAMES[gi];
+  if(g.mix){let k;do{k=Math.floor(Math.random()*(GAMES.length-1))}while(k===lastG);lastG=k;g=GAMES[k]}
+  G=g;$('pTitle').textContent=g.t;
+  const it=pickWord();let say0=()=>say(it.au),key=it.pr,P='',opts=[],O=$('opts'),afterSay=it.au;
+  const lettersPool=SECS.map(s=>s.l);
+  if(g.o==='pics'){
+    let list;
+    if(g.mode==='starts'){list=shuffle([it,...others(g.n-1,OTHERS(),it)])}
+    else if(g.mode==='odd'){const odd=rnd(OTHERS());key=odd.pr;afterSay=odd.au;list=shuffle([odd,...others(g.n-1,cur.items,it).slice(0,g.n-2),it]).slice(0,g.n);if(!list.includes(odd))list[0]=odd;list=shuffle(list)}
+    else list=shuffle([it,...others(g.n-1,cur.items,it)]);
+    opts=list.map(picBtn);
+  }else if(g.o==='words'){
+    let list;
+    if(g.mode==='oddw'){const odd=rnd(OTHERS());key=odd.pr;afterSay=odd.au;list=shuffle([odd,...others(g.n-1,cur.items,odd)])}
+    else list=shuffle([it,...others(g.n-1,cur.items,it)]);
+    opts=list.map(wordBtn);
+  }else if(g.o==='letters'){
+    let target=cur.l;
+    if(g.p==='lsound'||g.p==='lshape'){const pool=SECS.filter(s=>s.n);const ts=g.p==='lsound'?rnd(pool):rnd(SECS);target=ts.l;Q={ls:ts}}
+    key=target;
+    const ls=shuffle([target,...shuffle(lettersPool.filter(l=>l!==target)).slice(0,g.n-1)]);
+    opts=ls.map(letBtn);
+  }else if(g.o==='yesno'){
+    const match=Math.random()<.5;const shown=match?it:rnd(others(1,cur.items,it).concat(others(1,OTHERS(),it)));
+    key=match?'yes':'no';Q={shown};
+    opts=[`<button class="yn yes" type="button" data-k="yes" aria-label="Yes">✓</button>`,`<button class="yn no" type="button" data-k="no" aria-label="No">✗</button>`];
+    if(g.p==='tf'){say0=()=>say(shown.au)}
+    afterSay=it.au;
+  }
+  // prompt
+  const p=g.p;
+  if(p==='audio')P=txt(g.st==='two'?'Which one do you hear?':'Listen and tap!','Tap the speaker to hear it again');
+  else if(p==='image')P=img(it)+txt(g.mode==='first'?'What letter does it start with?':'Which word is it?',g.o==='words'?'Tap a word to hear it':'');
+  else if(p==='letter'){P=`<span class="bigl ar">${esc(cur.l)}</span>`+txt(g.mode==='odd'||g.mode==='oddw'?'Which one does NOT start with this letter?':'Which one starts with this letter?','Tap the speaker to hear the letter');say0=()=>{if(cur.n)say(cur.n)}}
+  else if(p==='word'){P=`<span class="bigw ar">${esc(it.ar)}</span>`+txt('Read the word','Then tap its picture');say0=()=>{}}
+  else if(p==='blur')P=img(it,'blur')+txt('What is it?','It gets clearer…');
+  else if(p==='zoom'){P=`<span class="zoomwrap">${img(it,'zoom')}</span>`+txt('What is it?','Look closely!')}
+  else if(p==='peek')P=`<span class="peekwrap">${img(it)}<i></i><i></i></span>`+txt('What is behind the curtain?','Watch it open…');
+  else if(p==='missing'){const w=it.ar;let i=1;while(i<w.length&&/[ً-ْٰ]/.test(w[i]))i++;P=img(it)+`<span class="bigw ar"><b class="gap">؟</b>${esc(w.slice(i))}</span>`;say0=()=>say(it.au)}
+  else if(p==='lsound'){P=txt('Hear the letter','Tap the speaker to hear it again');say0=()=>say(Q.ls.n)}
+  else if(p==='lshape'){P=`<span class="bigl ar">${esc(Q.ls.l)}</span>`+txt('Find this letter','');say0=()=>{if(Q.ls.n)say(Q.ls.n)}}
+  else if(p==='tf'){P=img(it)+txt('Is this the word you hear?','Tap the speaker to hear it again')}
+  else if(p==='tfword'){P=img(it)+`<span class="bigw ar">${esc(Q.shown.ar)}</span>`;say0=()=>{}}
+  $('pQ').innerHTML=P;
+  O.className='opts st-'+g.st;O.innerHTML=opts.join('');
+  for(const b of O.children)b.classList.add('go-pop');
+  Q=Object.assign(Q||{},{key,say0,afterSay,it,g});
+  setTimeout(()=>{if(Q&&Q.key===key)sayQ()},450);
+}
+function sayQ(){const b=$('pSay');b.classList.remove('ring');void b.offsetWidth;b.classList.add('ring');Q.say0()}
+$('pSay').addEventListener('click',()=>{if(!Q)return;if(['audio','tf','lsound','letter','lshape','missing'].includes(Q.g.p))sayQ();else say(Q.it.au)});
+$('opts').addEventListener('click',async e=>{
+  const b=e.target.closest('.opt,.wopt,.lopt,.yn');if(!b||answered||b.classList.contains('wrong'))return;
+  if(Q.g.st==='cards'&&!b.classList.contains('open')){b.classList.add('open')}
+  if(b.dataset.k===Q.key){
+    answered=true;b.classList.add('right');step=Math.min(STEPS,step+1);placeClimber('up');burst(b,30);
+    const t=token;await say(Q.afterSay);await wait(900);if(t!==token)return;
+    if(step>=STEPS)finish('play');else{Q=null;ask()}
+  }else{
+    b.classList.add('wrong');if(b.dataset.au&&Q.g.o==='words')say(b.dataset.au);
+    if(step>0){step--;placeClimber('down')}
+    if(Q.g.st==='cards')setTimeout(()=>b.classList.remove('open'),900);
+    if(['audio','tf','lsound'].includes(Q.g.p))setTimeout(sayQ,800);
+  }
+});
+$('goPlay').addEventListener('click',startPlay);
+// ---------- END ----------
+function finish(kind){
+  token++;
+  const starsN=3;
+  const st='<svg viewBox="0 0 24 24" width="58" height="58"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z" fill="#ffc107"/></svg>';
+  $('doneBox').innerHTML=`<div>${st.repeat(starsN)}</div><h2 class="ar">أَحْسَنْتَ!</h2><p style="margin:0;font-weight:800;color:var(--ink)">Well done!</p>`+
+   (kind==='play'?`<div class="winner">${ANIMALS[letterIndex()%ANIMALS.length]}</div><p style="font-size:22px;font-weight:800;color:var(--ink)">فُزْتَ! You won!</p><p>Your friend climbed all 10 steps.</p>`:`<p>You watched all ${cur.items.length} words of ${esc(cur.en)}.</p>`)+
+   `<button class="pill" type="button" id="again">${kind==='play'?'Play again':'Watch again'}</button><button class="pill" type="button" id="swap">${kind==='play'?'Watch':'Play'}</button><button class="pill alt" type="button" id="toHome">Letters</button>`;
+  show('end');burst(null,90);
+  $('again').onclick=kind==='play'?startPlay:startWatch;$('swap').onclick=kind==='play'?startWatch:startPlay;$('toHome').onclick=()=>show('home');
+}
+// ---------- confetti ----------
+const cv=$('fx'),cx=cv.getContext('2d');let parts=[],anim=0;
+function burst(el,n=40){
+  if(reduce)return;
+  cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  const r=el?el.getBoundingClientRect():{left:innerWidth/2-20,top:innerHeight/3,width:40,height:40};
+  const cols=['#ffc107','#ff5252','#40c4ff','#69f0ae','#e040fb','#fff'];
+  for(let i=0;i<n;i++)parts.push({x:r.left+r.width/2,y:r.top+r.height/2,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,s:6+Math.random()*8,c:cols[i%cols.length],a:Math.random()*6,l:70+Math.random()*30,star:i%3===0});
+  if(!anim)tick();
+}
+function starPath(x,y,r){cx.beginPath();for(let i=0;i<10;i++){const a=Math.PI/5*i-Math.PI/2,rr=i%2?r/2.2:r;cx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}cx.closePath()}
+function tick(){
+  cx.clearRect(0,0,innerWidth,innerHeight);
+  parts=parts.filter(p=>p.l>0);
+  for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.4;p.a+=.2;p.l--;cx.fillStyle=p.c;cx.globalAlpha=Math.min(1,p.l/30);
+    if(p.star){starPath(p.x,p.y,p.s);cx.fill()}else{cx.save();cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore()}}
+  cx.globalAlpha=1;
+  anim=parts.length?requestAnimationFrame(tick):0;
+}
+tiles();
+$('cred').innerHTML=D.cred.map(([k,f])=>`<li><a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(f)}">${esc(f)}</a></li>`).join('');
+}
+</script>
+</body>
+</html>

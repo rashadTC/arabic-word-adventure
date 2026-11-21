@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arabic Word Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Baloo+Bhaijaan+2:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: playful, warm, made for a four-year-old's thumb and a parent beside him.
+   IDEA: a little cartoon theatre: a stage with a curtain colour per letter, where words "perform" one after another.
+   PICTURE: the stage itself: a huge photo card that pops in, the Arabic word drawing itself, stars flying on a right answer.
+   COLOUR and TYPE: each letter owns its stage colour (blue, orange, purple, green, red, teal, violet, indigo, sunset); white cards; red first letter; sunny yellow stars; Baloo 2 + Baloo Bhaijaan 2.
+   LAYOUT: home = big letter tiles + two giant mode buttons; watch = full-height stage with controls under it; play = sound button over a 2x2 picture grid. */
+:root{color-scheme:light;--c:#1e88e5;--ink:#1d1d24;--soft:#5f6368;--sun:#ffc107;--red:#d32f2f;--blue:#1565c0}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--c);color:var(--ink);font:17px/1.45 "Baloo 2",system-ui,sans-serif;overflow-x:clip;transition:background .5s}
+.ar{font-family:"Baloo Bhaijaan 2","Baloo 2",sans-serif;direction:rtl}
+.view{display:none;min-height:100%;flex-direction:column;align-items:center;padding:max(14px,env(safe-area-inset-top)) 14px 18px}
+.view.on{display:flex}
+.wrap{width:100%;max-width:760px}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+button:focus-visible{outline:4px solid #fff;outline-offset:3px}
+.bubbles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bubbles i{position:absolute;border-radius:50%;background:rgba(255,255,255,.14);animation:float 14s linear infinite}
+@keyframes float{from{transform:translateY(110vh)}to{transform:translateY(-30vh)}}
+.view>*{position:relative;z-index:1}
+/* home */
+.hero{color:#fff;text-align:center;margin:10px 0 4px}
+.hero h1{font-size:clamp(34px,8vw,52px);line-height:1.05;margin:0;text-wrap:balance}
+.hero .ar{display:block;font-size:.75em;opacity:.9}
+.hero p{margin:8px auto 0;max-width:36ch;opacity:.92}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:18px 0;direction:rtl}
+.tile{background:#fff;border-radius:22px;aspect-ratio:1;display:grid;place-items:center;font:800 clamp(34px,9vw,54px)/1 "Baloo Bhaijaan 2",sans-serif;color:var(--tc);box-shadow:0 5px 0 rgba(0,0,0,.18);transition:transform .15s}
+.tile div{display:flex;flex-direction:column;align-items:center;line-height:1.25}.tile small{display:block;font:700 12px/1 "Baloo 2",sans-serif;color:var(--soft);margin-top:2px}.tile .w{font-size:.42em}
+.tile[aria-pressed=true]{transform:translateY(-4px) scale(1.06);outline:5px solid var(--sun)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mode{background:#fff;border-radius:26px;padding:18px 10px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 6px 0 rgba(0,0,0,.18);font-weight:800;font-size:24px;color:var(--ink)}
+.mode svg{width:62px;height:62px}
+.mode span{font-size:15px;font-weight:600;color:var(--soft);line-height:1.2;text-align:center}
+.picked{color:#fff;text-align:center;margin-top:12px;font-weight:700}
+/* shared top bar */
+.bar{width:100%;max-width:760px;display:flex;align-items:center;gap:10px;color:#fff;margin-bottom:10px}
+.round{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.95);color:var(--ink);display:grid;place-items:center;flex:none;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.round svg{width:24px;height:24px}
+.bar .t{flex:1;font-weight:800;font-size:20px;line-height:1.1}
+.dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;max-width:50%}
+.dots b{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.4)}
+.dots b.on{background:#fff}
+/* watch stage */
+.stage{width:100%;max-width:520px;background:#fff;border-radius:30px;box-shadow:0 8px 0 rgba(0,0,0,.18);overflow:hidden;text-align:center;position:relative}
+.stage .ph{aspect-ratio:1/1;background:#fff;overflow:hidden;position:relative}
+.stage .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.stage .ph.ill img{object-fit:contain;padding:18px}
+.stage .word{font-size:clamp(52px,15vw,84px);font-weight:800;line-height:1.2;margin-top:4px;min-height:1.25em}
+.stage .word .r{color:var(--red)}
+.stage .word{clip-path:inset(0 0 0 100%)}.stage .word.write{animation:write 1.1s ease-out forwards}@keyframes write{to{clip-path:inset(0 0 0 0)}}.stage .word b{color:var(--red);font-weight:800}
+.stage .pr{color:var(--blue);font-weight:800;font-size:24px;line-height:1.1;opacity:0}
+.stage .en{color:var(--soft);font-size:17px;padding-bottom:16px;opacity:0}
+.badge{position:absolute;top:12px;right:12px;width:62px;height:62px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font:800 36px/1 "Baloo Bhaijaan 2",sans-serif;z-index:2;box-shadow:0 3px 0 rgba(0,0,0,.2)}
+.intro{padding:34px 16px 30px}
+.intro .big{width:min(62vw,280px);aspect-ratio:1;margin:0 auto;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;font:800 clamp(110px,34vw,170px)/1 "Baloo Bhaijaan 2",sans-serif}
+.intro h2{font-size:38px;margin:14px 0 0;line-height:1.1}
+.intro p{margin:4px 0 0;color:var(--soft);font-size:18px}
+.ctrl{display:flex;gap:14px;justify-content:center;margin-top:16px}
+.ctrl .round{width:62px;height:62px}
+.ctrl .round.main{width:74px;height:74px;background:var(--sun)}
+.ctrl svg{width:30px;height:30px}
+.go-pop{animation:pop .55s cubic-bezier(.3,1.6,.5,1) both}
+.go-zoom img{animation:zoom 4.5s ease-out both}
+.go-up{animation:up .4s ease-out both}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes zoom{from{transform:scale(1.18)}to{transform:scale(1)}}
+@keyframes up{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+/* play */
+.ask{width:100%;max-width:520px;display:flex;align-items:center;gap:12px;background:#fff;border-radius:26px;padding:12px 14px;box-shadow:0 6px 0 rgba(0,0,0,.18);margin-bottom:14px}
+.ask .spk{width:76px;height:76px;border-radius:50%;background:var(--sun);display:grid;place-items:center;flex:none;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.ask .spk svg{width:40px;height:40px}
+.ask .spk.ring{animation:ring 1s ease-in-out}
+@keyframes ring{25%{transform:scale(1.12)}50%{transform:scale(.96)}75%{transform:scale(1.06)}}
+.ask .q{flex:1;font-weight:800;font-size:20px;line-height:1.2}
+.ask .q small{display:block;font-weight:600;color:var(--soft);font-size:15px}
+.stars{color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;gap:4px}
+.stars svg{width:26px;height:26px}
+.opts{width:100%;max-width:520px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.opt{background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 6px 0 rgba(0,0,0,.18);position:relative;padding:0;aspect-ratio:1;transition:transform .15s}
+.opt img{width:100%;height:100%;object-fit:cover;display:block}
+.opt.ill img{object-fit:contain;padding:12px}
+.opt.right{outline:7px solid #43a047;transform:scale(1.04)}
+.opt.wrong{animation:shake .45s;opacity:.45}
+.opt .lab{position:absolute;inset:auto 0 0;background:rgba(255,255,255,.94);font:800 30px/1.3 "Baloo Bhaijaan 2",sans-serif;direction:rtl;text-align:center;transform:translateY(100%);transition:transform .3s}
+.opt.right .lab{transform:none}
+@keyframes shake{20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+.done{width:100%;max-width:520px;background:#fff;border-radius:30px;padding:30px 18px;text-align:center;box-shadow:0 8px 0 rgba(0,0,0,.18)}
+.done h2{font-size:40px;margin:0;line-height:1.1}
+.done .big{font-size:64px;font-weight:800;color:var(--c);line-height:1}
+.done p{color:var(--soft);margin:6px 0 18px}
+.pill{background:var(--c);color:#fff;border-radius:999px;min-height:54px;padding:6px 26px;font-weight:800;font-size:20px;margin:6px}
+.pill.alt{background:#eef0f4;color:var(--ink)}
+canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9}
+.hint{color:#fff;opacity:.9;font-size:15px;margin-top:12px;text-align:center}
+@media(max-width:420px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}.mode{min-height:130px;font-size:21px}}
+@media(prefers-reduced-motion:reduce){.stage .word{clip-path:none}*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}.bubbles{display:none}}
+</style>
+</head>
+<body>
+<div class="bubbles" id="bub" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<section class="view on" id="home">
+  <div class="wrap">
+    <div class="hero"><h1>Arabic word adventure <span class="ar">مغامرة الكلمات</span></h1>
+      <p>Pick a letter, then choose Watch to learn or Play to test yourself.</p></div>
+    <div class="tiles" id="tiles" role="group" aria-label="Choose a letter"></div>
+    <div class="modes">
+      <button class="mode" id="goWatch" type="button"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#1e88e5"/><path d="M25 19l22 13-22 13z" fill="#fff"/></svg>Watch<span>Words appear with picture and voice</span></button>
+      <button class="mode" id="goPlay" type="button"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#ffc107"/><path d="M32 13l5.6 11.4 12.6 1.8-9.1 8.9 2.1 12.5L32 41.7l-11.2 5.9 2.1-12.5-9.1-8.9 12.6-1.8z" fill="#fff"/></svg>Play<span>Hear a word, tap the right picture</span></button>
+    </div>
+    <p class="picked" id="picked"></p>
+  </div>
+</section>
+
+<section class="view" id="watch">
+  <div class="bar"><button class="round" type="button" data-home aria-label="Back to letters"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z" fill="#222"/></svg></button><div class="t" id="wTitle"></div><div class="dots" id="wDots"></div></div>
+  <div class="stage" id="stage"></div>
+  <div class="ctrl">
+    <button class="round" type="button" id="wPrev" aria-label="Previous word"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z" fill="#222"/></svg></button>
+    <button class="round main" type="button" id="wPlay" aria-label="Pause"><svg viewBox="0 0 24 24" id="wIcon"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="#222"/></svg></button>
+    <button class="round" type="button" id="wAgain" aria-label="Hear it again"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#222"/><path d="M16 8.5a5 5 0 0 1 0 7" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+    <button class="round" type="button" id="wNext" aria-label="Next word"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z" fill="#222"/></svg></button>
+  </div>
+  <p class="hint">Say each word out loud after the voice!</p>
+</section>
+
+<section class="view" id="play">
+  <div class="bar"><button class="round" type="button" data-home aria-label="Back to letters"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z" fill="#222"/></svg></button><div class="t" id="pTitle"></div><div class="stars"><svg viewBox="0 0 24 24"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z" fill="#ffc107" stroke="#fff" stroke-width="1"/></svg><span id="score">0</span></div></div>
+  <div class="ask"><button class="spk" type="button" id="pSay" aria-label="Hear the word again"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z" fill="#222"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button><div class="q" id="pQ">Which picture is it?<small>Tap the speaker to hear it again</small></div></div>
+  <div class="opts" id="opts"></div>
+</section>
+
+<section class="view" id="end">
+  <div class="done" id="doneBox"></div>
+</section>
+
+<script>
+{
+const D={"S": [{"id": "baa", "l": "ب", "ar": "حرف الباء", "en": "Letter baa", "c": "1E88E5", "items": [{"ar": "بَابا", "pr": "baaba", "en": "dad", "img": "p/i_baaba.jpg", "kind": "ill", "au": "a/baaba.mp3"}, {"ar": "بَيت", "pr": "bayt", "en": "house", "img": "p/bayt.jpg", "kind": "photo", "au": "a/bayt.mp3"}, {"ar": "بَحر", "pr": "bahr", "en": "sea", "img": "p/bahr.jpg", "kind": "photo", "au": "a/bahr.mp3"}, {"ar": "بالون", "pr": "baaloon", "en": "balloon", "img": "p/baaloon.jpg", "kind": "photo", "au": "a/baaloon.mp3"}, {"ar": "باب", "pr": "baab", "en": "door", "img": "p/baab.jpg", "kind": "photo", "au": "a/baab.mp3"}, {"ar": "بَيض", "pr": "bayd", "en": "eggs", "img": "p/bayd.jpg", "kind": "photo", "au": "a/bayd.mp3"}, {"ar": "بَقرة", "pr": "baqara", "en": "cow", "img": "p/baqara.jpg", "kind": "photo", "au": "a/baqara.mp3"}, {"ar": "بَطة", "pr": "batta", "en": "duck", "img": "p/batta.jpg", "kind": "photo", "au": "a/batta.mp3"}, {"ar": "بِنت", "pr": "bint", "en": "girl", "img": "p/i_bint.jpg", "kind": "ill", "au": "a/bint.mp3"}, {"ar": "بُرتقال", "pr": "burtuqaal", "en": "orange", "img": "p/burtuqaal.jpg", "kind": "photo", "au": "a/burtuqaal.mp3"}]}, {"id": "daal", "l": "د", "ar": "حرف الدال", "en": "Letter daal", "c": "EF6C00", "items": [{"ar": "دَجاجة", "pr": "dajaaja", "en": "hen", "img": "p/dajaaja.jpg", "kind": "photo", "au": "a/dajaaja.mp3"}, {"ar": "دِيك", "pr": "deek", "en": "rooster", "img": "p/deek.jpg", "kind": "photo", "au": "a/deek.mp3"}, {"ar": "دُب", "pr": "dubb", "en": "bear", "img": "p/dubb.jpg", "kind": "photo", "au": "a/dubb.mp3"}, {"ar": "دَراجة", "pr": "darraaja", "en": "bicycle", "img": "p/darraaja.jpg", "kind": "photo", "au": "a/darraaja.mp3"}, {"ar": "دَواء", "pr": "dawaa'", "en": "medicine", "img": "p/i_dawaa.jpg", "kind": "ill", "au": "a/dawaa.mp3"}, {"ar": "دائرة", "pr": "daa'ira", "en": "circle", "img": "", "kind": "none", "au": "a/daa_ira.mp3"}, {"ar": "دَلة", "pr": "dalla", "en": "coffee pot", "img": "p/dalla.jpg", "kind": "photo", "au": "a/dalla.mp3"}, {"ar": "دُودة", "pr": "dooda", "en": "worm", "img": "p/dooda.jpg", "kind": "photo", "au": "a/dooda.mp3"}, {"ar": "دِرهم", "pr": "dirham", "en": "dirham coin", "img": "p/dirham.jpg", "kind": "photo", "au": "a/dirham.mp3"}, {"ar": "دَرج", "pr": "daraj", "en": "stairs", "img": "p/daraj.jpg", "kind": "photo", "au": "a/daraj.mp3"}, {"ar": "دَيناصور", "pr": "daynaasoor", "en": "dinosaur", "img": "p/daynaasoor.jpg", "kind": "photo", "au": "a/daynaasoor.mp3"}, {"ar": "دُولفين", "pr": "doolfeen", "en": "dolphin", "img": "p/doolfeen.jpg", "kind": "photo", "au": "a/doolfeen.mp3"}]}, {"id": "meem", "l": "م", "ar": "حرف الميم", "en": "Letter meem", "c": "7E57C2", "items": [{"ar": "مَاما", "pr": "maama", "en": "mum", "img": "p/i_maama.jpg", "kind": "ill", "au": "a/maama.mp3"}, {"ar": "مِفتاح", "pr": "miftaah", "en": "key", "img": "p/miftaah.jpg", "kind": "photo", "au": "a/miftaah.mp3"}, {"ar": "مَاء", "pr": "maa'", "en": "water", "img": "p/maa.jpg", "kind": "photo", "au": "a/maa.mp3"}, {"ar": "مَسجد", "pr": "masjid", "en": "mosque", "img": "p/masjid.jpg", "kind": "photo", "au": "a/masjid.mp3"}, {"ar": "مِقص", "pr": "miqass", "en": "scissors", "img": "p/miqass.jpg", "kind": "photo", "au": "a/miqass.mp3"}, {"ar": "مَدرسة", "pr": "madrasa", "en": "school", "img": "p/madrasa.jpg", "kind": "photo", "au": "a/madrasa.mp3"}, {"ar": "مَطر", "pr": "matar", "en": "rain", "img": "p/matar.jpg", "kind": "photo", "au": "a/matar.mp3"}, {"ar": "مَوز", "pr": "mawz", "en": "banana", "img": "p/mawz.jpg", "kind": "photo", "au": "a/mawz.mp3"}, {"ar": "مَطبخ", "pr": "matbakh", "en": "kitchen", "img": "p/matbakh.jpg", "kind": "photo", "au": "a/matbakh.mp3"}, {"ar": "مِشط", "pr": "misht", "en": "comb", "img": "p/misht.jpg", "kind": "photo", "au": "a/misht.mp3"}]}, {"id": "waaw", "l": "و", "ar": "حرف الواو", "en": "Letter waaw", "c": "2E7D32", "items": [{"ar": "وِسام", "pr": "wisaam", "en": "medal", "img": "p/wisaam.jpg", "kind": "photo", "au": "a/wisaam.mp3"}, {"ar": "وَرل", "pr": "waral", "en": "monitor lizard", "img": "p/waral.jpg", "kind": "photo", "au": "a/waral.mp3"}, {"ar": "وَرق", "pr": "waraq", "en": "leaves", "img": "p/waraq.jpg", "kind": "photo", "au": "a/waraq.mp3"}, {"ar": "وَاحد", "pr": "waahid", "en": "one", "img": "p/i_waahid.jpg", "kind": "ill", "au": "a/waahid.mp3"}, {"ar": "وَجه", "pr": "wajh", "en": "face", "img": "p/i_wajh.jpg", "kind": "ill", "au": "a/wajh.mp3"}, {"ar": "وَرد", "pr": "ward", "en": "roses", "img": "p/ward.jpg", "kind": "photo", "au": "a/ward.mp3"}, {"ar": "وَلد", "pr": "walad", "en": "boy", "img": "p/i_walad.jpg", "kind": "ill", "au": "a/walad.mp3"}, {"ar": "وَحش", "pr": "wahsh", "en": "monster", "img": "p/i_wahsh.jpg", "kind": "ill", "au": "a/wahsh.mp3"}, {"ar": "وَزة", "pr": "wazza", "en": "goose", "img": "p/wazza.jpg", "kind": "photo", "au": "a/wazza.mp3"}]}, {"id": "raa", "l": "ر", "ar": "حرف الراء", "en": "Letter raa", "c": "D32F2F", "items": [{"ar": "رُمان", "pr": "rummaan", "en": "pomegranate", "img": "p/rummaan.jpg", "kind": "photo", "au": "a/rummaan.mp3"}, {"ar": "رَمل", "pr": "raml", "en": "sand", "img": "p/raml.jpg", "kind": "photo", "au": "a/raml.mp3"}, {"ar": "رَسام", "pr": "rassaam", "en": "painter", "img": "p/i_rasama.jpg", "kind": "ill", "au": "a/rassaam.mp3"}, {"ar": "رِيش", "pr": "reesh", "en": "feathers", "img": "p/i_reesh.jpg", "kind": "ill", "au": "a/reesh.mp3"}, {"ar": "رَغوة", "pr": "raghwa", "en": "foam", "img": "p/raghwa.jpg", "kind": "photo", "au": "a/raghwa.mp3"}, {"ar": "رَجُل", "pr": "rajul", "en": "man", "img": "p/i_rajul.jpg", "kind": "ill", "au": "a/rajul.mp3"}, {"ar": "رَأْس", "pr": "ra's", "en": "head", "img": "p/i_ra_s.jpg", "kind": "ill", "au": "a/ra_s.mp3"}, {"ar": "رِجِل", "pr": "rijl", "en": "leg", "img": "p/i_rijl.jpg", "kind": "ill", "au": "a/rijl.mp3"}, {"ar": "رُطَب", "pr": "rutab", "en": "fresh dates", "img": "p/rutab.jpg", "kind": "photo", "au": "a/rutab.mp3"}, {"ar": "رَكَضَ", "pr": "rakada", "en": "ran", "img": "p/i_rakada.jpg", "kind": "ill", "au": "a/rakada.mp3"}, {"ar": "رَكَعَ", "pr": "raka'a", "en": "bowed in prayer", "img": "p/i_raka_a.jpg", "kind": "ill", "au": "a/raka_a.mp3"}]}, {"id": "alif", "l": "أ", "ar": "حرف الألف", "en": "Letter alif", "c": "00897B", "items": [{"ar": "أَسد", "pr": "asad", "en": "lion", "img": "p/asad.jpg", "kind": "photo", "au": "a/asad.mp3"}, {"ar": "أَرنب", "pr": "arnab", "en": "rabbit", "img": "p/arnab.jpg", "kind": "photo", "au": "a/arnab.mp3"}, {"ar": "أَناناس", "pr": "ananaas", "en": "pineapple", "img": "p/ananaas.jpg", "kind": "photo", "au": "a/ananaas.mp3"}, {"ar": "أَنف", "pr": "anf", "en": "nose", "img": "p/i_anf.jpg", "kind": "ill", "au": "a/anf.mp3"}, {"ar": "أبوظبي", "pr": "abu dhabi", "en": "Abu Dhabi", "img": "p/abu_dhabi.jpg", "kind": "photo", "au": "a/abu_dhabi.mp3"}, {"ar": "أَخطبوط", "pr": "akhtaboot", "en": "octopus", "img": "p/akhtaboot.jpg", "kind": "photo", "au": "a/akhtaboot.mp3"}, {"ar": "أَلوان", "pr": "alwaan", "en": "colours", "img": "p/alwaan.jpg", "kind": "photo", "au": "a/alwaan.mp3"}, {"ar": "أَشكال", "pr": "ashkaal", "en": "shapes", "img": "p/i_ashkaal.jpg", "kind": "ill", "au": "a/ashkaal.mp3"}, {"ar": "أَرز", "pr": "aruzz", "en": "rice", "img": "p/aruzz.jpg", "kind": "photo", "au": "a/aruzz.mp3"}, {"ar": "إِبريق", "pr": "ibreeq", "en": "jug", "img": "p/ibreeq.jpg", "kind": "photo", "au": "a/ibreeq.mp3"}, {"ar": "إِبرة", "pr": "ibra", "en": "needle", "img": "p/ibra.jpg", "kind": "photo", "au": "a/ibra.mp3"}, {"ar": "إِصبع", "pr": "isba'", "en": "finger", "img": "p/i_isba.jpg", "kind": "ill", "au": "a/isba.mp3"}, {"ar": "أُذن", "pr": "udhun", "en": "ear", "img": "p/i_udhun.jpg", "kind": "ill", "au": "a/udhun.mp3"}, {"ar": "أُسرة", "pr": "usra", "en": "family", "img": "p/i_usra.jpg", "kind": "ill", "au": "a/usra.mp3"}]}, {"id": "haa", "l": "ح", "ar": "حرف الحاء", "en": "Letter haa", "c": "8E24AA", "items": [{"ar": "حيوانات", "pr": "hayawaanaat", "en": "animals", "img": "p/hayawaanaat.jpg", "kind": "photo", "au": "a/hayawaanaat.mp3"}, {"ar": "حشرات", "pr": "hasharaat", "en": "insects", "img": "p/hasharaat.jpg", "kind": "photo", "au": "a/hasharaat.mp3"}, {"ar": "حصان", "pr": "hisaan", "en": "horse", "img": "p/hisaan.jpg", "kind": "photo", "au": "a/hisaan.mp3"}, {"ar": "حبل", "pr": "habl", "en": "rope", "img": "p/habl.jpg", "kind": "photo", "au": "a/habl.mp3"}, {"ar": "حروف", "pr": "huroof", "en": "letters", "img": "p/i_huroof.jpg", "kind": "ill", "au": "a/huroof.mp3"}, {"ar": "حلزون", "pr": "halazoon", "en": "snail", "img": "p/halazoon.jpg", "kind": "photo", "au": "a/halazoon.mp3"}, {"ar": "حمار", "pr": "himaar", "en": "donkey", "img": "p/himaar.jpg", "kind": "photo", "au": "a/himaar.mp3"}, {"ar": "حفلة", "pr": "hafla", "en": "party", "img": "p/hafla.jpg", "kind": "photo", "au": "a/hafla.mp3"}, {"ar": "حلوى", "pr": "halwa", "en": "sweets", "img": "p/halwa.jpg", "kind": "photo", "au": "a/halwa.mp3"}, {"ar": "حقيبة", "pr": "haqeeba", "en": "bag", "img": "p/haqeeba.jpg", "kind": "photo", "au": "a/haqeeba.mp3"}, {"ar": "حافلة", "pr": "haafila", "en": "bus", "img": "p/haafila.jpg", "kind": "photo", "au": "a/haafila.mp3"}, {"ar": "حزام", "pr": "hizaam", "en": "belt", "img": "p/hizaam.jpg", "kind": "photo", "au": "a/hizaam.mp3"}, {"ar": "حوت", "pr": "hoot", "en": "whale", "img": "p/hoot.jpg", "kind": "photo", "au": "a/hoot.mp3"}]}, {"id": "seen", "l": "س", "ar": "حرف السين", "en": "Letter seen", "c": "3949AB", "items": [{"ar": "سفينة", "pr": "safeena", "en": "ship", "img": "p/safeena.jpg", "kind": "photo", "au": "a/safeena.mp3"}, {"ar": "سلم", "pr": "sullam", "en": "ladder", "img": "p/sullam.jpg", "kind": "photo", "au": "a/sullam.mp3"}, {"ar": "سيارة", "pr": "sayyaara", "en": "car", "img": "p/sayyaara.jpg", "kind": "photo", "au": "a/sayyaara.mp3"}, {"ar": "سمك", "pr": "samak", "en": "fish", "img": "p/samak.jpg", "kind": "photo", "au": "a/samak.mp3"}, {"ar": "ساحرة", "pr": "saahira", "en": "magician", "img": "p/i_saahira.jpg", "kind": "ill", "au": "a/saahira.mp3"}, {"ar": "ساعة", "pr": "saa'a", "en": "clock", "img": "p/saa_a.jpg", "kind": "photo", "au": "a/saa_a.mp3"}, {"ar": "سرير", "pr": "sareer", "en": "bed", "img": "p/sareer.jpg", "kind": "photo", "au": "a/sareer.mp3"}, {"ar": "سنجاب", "pr": "sinjaab", "en": "squirrel", "img": "p/sinjaab.jpg", "kind": "photo", "au": "a/sinjaab.mp3"}, {"ar": "سلحفاة", "pr": "sulahfaa", "en": "turtle", "img": "p/sulahfaa.jpg", "kind": "photo", "au": "a/sulahfaa.mp3"}, {"ar": "سجادة", "pr": "sajjaada", "en": "prayer mat", "img": "p/sajjaada.jpg", "kind": "photo", "au": "a/sajjaada.mp3"}]}, {"id": "sight", "l": "★", "ar": "كلمات بصرية", "en": "Sight words", "c": "F4511E", "items": [{"ar": "بَطة", "pr": "batta", "en": "duck", "img": "p/batta.jpg", "kind": "photo", "au": "a/batta.mp3"}, {"ar": "ماما", "pr": "maama", "en": "mum", "img": "p/i_maama.jpg", "kind": "ill", "au": "a/maama.mp3"}, {"ar": "هذا", "pr": "haadha", "en": "this", "img": "p/i_haadha.jpg", "kind": "ill", "au": "a/haadha.mp3"}, {"ar": "أَنا", "pr": "ana", "en": "I / me", "img": "p/i_ana.jpg", "kind": "ill", "au": "a/ana.mp3"}, {"ar": "بابا", "pr": "baaba", "en": "dad", "img": "p/i_baaba.jpg", "kind": "ill", "au": "a/baaba.mp3"}, {"ar": "مَوز", "pr": "mawz", "en": "banana", "img": "p/mawz.jpg", "kind": "photo", "au": "a/mawz.mp3"}, {"ar": "أُحب", "pr": "uhibbu", "en": "I love", "img": "p/i_uhibbu.jpg", "kind": "ill", "au": "a/uhibbu.mp3"}, {"ar": "سَمك", "pr": "samak", "en": "fish", "img": "p/samak.jpg", "kind": "photo", "au": "a/samak.mp3"}, {"ar": "دُب", "pr": "dubb", "en": "bear", "img": "p/dubb.jpg", "kind": "photo", "au": "a/dubb.mp3"}, {"ar": "حَمد", "pr": "hamad", "en": "Hamad (a name)", "img": "p/i_hamad.jpg", "kind": "ill", "au": "a/hamad.mp3"}, {"ar": "الله", "pr": "allaah", "en": "Allah", "img": "p/i_allaah.jpg", "kind": "ill", "au": "a/allaah.mp3"}, {"ar": "وَلد", "pr": "walad", "en": "boy", "img": "p/i_walad.jpg", "kind": "ill", "au": "a/walad.mp3"}, {"ar": "رَجل", "pr": "rajul", "en": "man", "img": "p/i_rajul.jpg", "kind": "ill", "au": "a/rajul.mp3"}, {"ar": "حوت", "pr": "hoot", "en": "whale", "img": "p/hoot.jpg", "kind": "photo", "au": "a/hoot.mp3"}, {"ar": "أَسد", "pr": "asad", "en": "lion", "img": "p/asad.jpg", "kind": "photo", "au": "a/asad.mp3"}, {"ar": "أَرى", "pr": "araa", "en": "I see", "img": "p/i_araa.jpg", "kind": "ill", "au": "a/araa.mp3"}, {"ar": "رَسم", "pr": "rasama", "en": "drew", "img": "p/i_rasama.jpg", "kind": "ill", "au": "a/rasama.mp3"}]}], "letters": [{"l": "أ", "n": "alif", "au": "a/alif.mp3"}, {"l": "ب", "n": "baa", "au": "a/baa.mp3"}, {"l": "ح", "n": "haa", "au": "a/haa.mp3"}, {"l": "د", "n": "daal", "au": "a/daal.mp3"}, {"l": "ر", "n": "raa", "au": "a/raa.mp3"}, {"l": "س", "n": "seen", "au": "a/seen.mp3"}, {"l": "م", "n": "meem", "au": "a/meem.mp3"}, {"l": "و", "n": "waaw", "au": "a/waaw.mp3"}]};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const marks=/[ً-ْٰ]/;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ALL={id:'all',l:'★',ar:'كل الحروف',en:'All letters',c:'F4511E',items:D.S.filter(s=>s.id!=='sight').flatMap(s=>s.items)};
+const SECS=[...D.S,ALL];
+let cur=SECS[0];
+// bubbles
+$('bub').innerHTML=Array.from({length:9},(_,i)=>`<i style="left:${(i*37)%100}%;width:${40+(i*23)%70}px;height:${40+(i*23)%70}px;animation-delay:-${i*1.6}s;animation-duration:${12+(i%4)*3}s"></i>`).join('');
+// audio
+const player=new Audio();let token=0;
+function say(src){return new Promise(res=>{try{player.pause();player.src=src;player.onended=res;player.onerror=res;const p=player.play();if(p)p.catch(res)}catch(e){res()}})}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function setColor(c){document.body.style.setProperty('--c','#'+c);document.documentElement.style.setProperty('--c','#'+c)}
+function show(v){for(const s of document.querySelectorAll('.view'))s.classList.toggle('on',s.id===v);scrollTo(0,0)}
+// home
+function tiles(){
+  $('tiles').innerHTML=SECS.map((s,i)=>`<button class="tile" type="button" data-i="${i}" style="--tc:#${s.c}" aria-pressed="${s===cur}" aria-label="${esc(s.en)}"><div><span class="${s.id==='all'||s.id==='sight'?'w':''}">${s.id==='all'?'الكل':s.id==='sight'?'كلمات':esc(s.l)}</span><small>${s.id==='all'?'all':s.id==='sight'?'sight':esc(s.en.replace('Letter ',''))}</small></div></button>`).join('');
+  $('picked').textContent=`${cur.en} · ${cur.items.length} words`;
+  setColor(cur.c);
+}
+$('tiles').addEventListener('click',e=>{const b=e.target.closest('.tile');if(!b)return;cur=SECS[+b.dataset.i];tiles();
+  const n=cur.id==='all'||cur.id==='sight'?null:D.letters.find(x=>x.n===cur.id);if(n)say(n.au)});
+for(const b of document.querySelectorAll('[data-home]'))b.addEventListener('click',()=>{token++;player.pause();show('home')});
+// ---------- WATCH ----------
+let wi=0,paused=false,list=[];
+function phHtml(it){return it.img?`<div class="ph${it.kind==='ill'?' ill':''} go-zoom"><img src="${esc(it.img)}" alt="${esc(it.en)}"></div>`:`<div class="ph" style="display:grid;place-items:center"><div style="width:62%;aspect-ratio:1;border-radius:50%;border:22px solid #f9a825"></div></div>`}
+function wordSpans(w,hl){if(!hl)return esc(w);let i=1;while(i<w.length&&marks.test(w[i]))i++;return `<b>${esc(w.slice(0,i))}</b>${esc(w.slice(i))}`}
+function dots(){$('wDots').innerHTML=list.map((_,i)=>`<b class="${i<=wi?'on':''}"></b>`).join('')}
+async function playWord(t){
+  const isIntro=wi===0;
+  dots();
+  if(isIntro){
+    const n=D.letters.find(x=>x.n===cur.id);
+    $('stage').innerHTML=`<div class="intro"><div class="big go-pop">${esc(cur.l)}</div><h2 class="ar go-up">${esc(cur.ar)}</h2><p>${esc(cur.en)} · ${cur.items.length} words</p></div>`;
+    if(n){await wait(500);if(t!==token)return;await say(n.au);await wait(300);if(t!==token)return;await say(n.au)}
+    await wait(1800);return;
+  }
+  const it=list[wi];
+  const hl=cur.id!=='sight';
+  $('stage').innerHTML=`<span class="badge go-pop">${esc(cur.id==='all'?it.ar.replace(/[ً-ْٰ]/g,'')[0]:cur.l)}</span>${phHtml(it)}<div class="word ar">${wordSpans(it.ar,hl)}</div><div class="pr">${esc(it.pr)}</div><div class="en">${esc(it.en)}</div>`;
+  $('stage').classList.remove('go-pop');void $('stage').offsetWidth;$('stage').classList.add('go-pop');
+  await wait(450);if(t!==token)return;
+  $('stage').querySelector('.word').classList.add('write');
+  await wait(reduce?0:700);
+  if(t!==token)return;
+  for(const c of ['pr','en'])$('stage').querySelector('.'+c).classList.add('go-up');
+  await say(it.au);if(t!==token)return;
+  await wait(900);if(t!==token)return;
+  await say(it.au);if(t!==token)return;
+  await wait(1500);
+}
+async function runWatch(){
+  const t=++token;
+  while(wi<list.length&&t===token){
+    await playWord(t);
+    if(t!==token)return;
+    while(paused){await wait(200);if(t!==token)return}
+    wi++;
+  }
+  if(t===token&&wi>=list.length)finish('watch');
+}
+function startWatch(){list=[null,...cur.items];wi=0;paused=false;setIcon();$('wTitle').textContent=cur.en;show('watch');runWatch()}
+function setIcon(){$('wIcon').innerHTML=paused?'<path d="M7 5l12 7-12 7z" fill="#222"/>':'<path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="#222"/>';$('wPlay').setAttribute('aria-label',paused?'Play':'Pause')}
+$('goWatch').addEventListener('click',startWatch);
+$('wPlay').addEventListener('click',()=>{paused=!paused;setIcon();if(paused)player.pause()});
+$('wNext').addEventListener('click',()=>{if(wi<list.length-1){wi++;paused=false;setIcon();restart()}});
+$('wPrev').addEventListener('click',()=>{if(wi>0){wi--;paused=false;setIcon();restart()}});
+$('wAgain').addEventListener('click',()=>{const it=list[wi];if(it)say(it.au)});
+function restart(){token++;player.pause();const t=token;(async()=>{while(wi<list.length&&t===token){await playWord(t);if(t!==token)return;while(paused){await wait(200);if(t!==token)return}wi++}if(t===token)finish('watch')})()}
+// ---------- PLAY ----------
+let qs=[],qi=0,score=0,tries=0,answered=false;
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function startPlay(){
+  const pool=cur.items.filter(x=>x.img);
+  qs=shuffle(pool).slice(0,Math.min(10,pool.length));qi=0;score=0;$('score').textContent=0;$('pTitle').textContent=cur.en;show('play');token++;ask();
+}
+function ask(){
+  answered=false;tries=0;
+  const it=qs[qi];
+  const pool=(cur.items.length>=4?cur.items:ALL.items).filter(x=>x.img&&x.pr!==it.pr);
+  const opts=shuffle([it,...shuffle(pool).slice(0,3)]);
+  $('pQ').innerHTML=`Which picture is it? <small>Question ${qi+1} of ${qs.length} · tap the speaker to hear it again</small>`;
+  $('opts').innerHTML=opts.map(o=>`<button class="opt${o.kind==='ill'?' ill':''}" type="button" data-pr="${esc(o.pr)}" aria-label="${esc(o.en)}"><img src="${esc(o.img)}" alt=""><span class="lab">${esc(o.ar)}</span></button>`).join('');
+  for(const b of $('opts').children){b.classList.add('go-pop')}
+  setTimeout(()=>sayQ(),500);
+}
+function sayQ(){const b=$('pSay');b.classList.remove('ring');void b.offsetWidth;b.classList.add('ring');say(qs[qi].au)}
+$('pSay').addEventListener('click',sayQ);
+$('opts').addEventListener('click',async e=>{
+  const b=e.target.closest('.opt');if(!b||answered||b.classList.contains('wrong'))return;
+  const it=qs[qi];
+  if(b.dataset.pr===it.pr){
+    answered=true;b.classList.add('right');const pts=tries===0?2:1;score+=pts;$('score').textContent=score;burst(b);
+    const t=token;await say(it.au);await wait(1100);if(t!==token)return;
+    qi++;if(qi<qs.length)ask();else finish('play');
+  }else{tries++;b.classList.add('wrong');setTimeout(sayQ,600)}
+});
+$('goPlay').addEventListener('click',startPlay);
+// ---------- END ----------
+function finish(kind){
+  token++;
+  const max=qs.length*2;
+  const starsN=kind==='play'?(score>=max*.85?3:score>=max*.5?2:1):3;
+  const st='<svg viewBox="0 0 24 24" width="58" height="58"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z" fill="#ffc107"/></svg>';
+  $('doneBox').innerHTML=`<div>${st.repeat(starsN)}</div><h2 class="ar">أَحْسَنْتَ!</h2><p style="margin:0;font-weight:800;color:var(--ink)">Well done!</p>`+
+   (kind==='play'?`<div class="big">${score} / ${max}</div><p>stars from ${qs.length} questions</p>`:`<p>You watched all ${cur.items.length} words of ${esc(cur.en)}.</p>`)+
+   `<button class="pill" type="button" id="again">${kind==='play'?'Play again':'Watch again'}</button><button class="pill" type="button" id="swap">${kind==='play'?'Watch':'Play'}</button><button class="pill alt" type="button" id="toHome">Letters</button>`;
+  show('end');burst(null,90);
+  $('again').onclick=kind==='play'?startPlay:startWatch;$('swap').onclick=kind==='play'?startWatch:startPlay;$('toHome').onclick=()=>show('home');
+}
+// ---------- confetti ----------
+const cv=$('fx'),cx=cv.getContext('2d');let parts=[],anim=0;
+function burst(el,n=40){
+  if(reduce)return;
+  cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;cx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  const r=el?el.getBoundingClientRect():{left:innerWidth/2-20,top:innerHeight/3,width:40,height:40};
+  const cols=['#ffc107','#ff5252','#40c4ff','#69f0ae','#e040fb','#fff'];
+  for(let i=0;i<n;i++)parts.push({x:r.left+r.width/2,y:r.top+r.height/2,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,s:6+Math.random()*8,c:cols[i%cols.length],a:Math.random()*6,l:70+Math.random()*30,star:i%3===0});
+  if(!anim)tick();
+}
+function starPath(x,y,r){cx.beginPath();for(let i=0;i<10;i++){const a=Math.PI/5*i-Math.PI/2,rr=i%2?r/2.2:r;cx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}cx.closePath()}
+function tick(){
+  cx.clearRect(0,0,innerWidth,innerHeight);
+  parts=parts.filter(p=>p.l>0);
+  for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=.4;p.a+=.2;p.l--;cx.fillStyle=p.c;cx.globalAlpha=Math.min(1,p.l/30);
+    if(p.star){starPath(p.x,p.y,p.s);cx.fill()}else{cx.save();cx.translate(p.x,p.y);cx.rotate(p.a);cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore()}}
+  cx.globalAlpha=1;
+  anim=parts.length?requestAnimationFrame(tick):0;
+}
+tiles();
+}
+</script>
+</body>
+</html>
